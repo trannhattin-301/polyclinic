@@ -56,7 +56,7 @@ class Doctor(models.Model):
         return self.user.get_full_name() or self.user.username
 
 
-class Patient(models.Model):  # ✅
+class Patient(models.Model):
     user             = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile')
     dob              = models.DateField(blank=True, null=True)
     gender           = models.CharField(max_length=10, blank=True, null=True)
