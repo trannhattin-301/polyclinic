@@ -5,7 +5,6 @@ from cloudinary.models import CloudinaryField
 
 # Role
 class RoleChoices(models.TextChoices):
-    ADMIN = 'admin', 'Admin'
     DOCTOR = 'doctor', 'Doctor'
     NURSE = 'nurse', 'Nurse'
     PATIENT = 'patient', 'Patient'
@@ -23,25 +22,8 @@ class User(AbstractUser):
     avatar = CloudinaryField(null=True, blank=True)
     role = models.CharField(max_length=20, choices=RoleChoices.choices,  default=RoleChoices.PATIENT)
     created_at = models.DateTimeField(auto_now_add=True)
-    # Dùng email để đăng nhập
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
-
-    # Override groups & permissions để tránh conflict khi dùng AbstractUser
-    groups = models.ManyToManyField(
-        Group,
-        related_name='custom_user_set',
-        blank=True,
-        help_text='The groups this user belongs to.',
-        verbose_name='groups',
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        related_name='custom_user_set_permissions',
-        blank=True,
-        help_text='Specific permissions for this user.',
-        verbose_name='user permissions',
-    )
 
     class Meta:
         db_table = 'user'

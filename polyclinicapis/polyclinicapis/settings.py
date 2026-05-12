@@ -86,6 +86,8 @@ DATABASES = {
     }
 }
 
+# Thay thế auth.User mặc định bằng User model tùy chỉnh của polyclinic
+AUTH_USER_MODEL = 'polyclinic.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
