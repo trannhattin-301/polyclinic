@@ -1,41 +1,77 @@
-from django.db.models import IntegerChoices
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from cloudinary.models import CloudinaryField
 
-class UserRole(IntegerChoices):
-    ADMIN   = 0, 'Admin'
-    DOCTOR  = 1, 'Doctor'
-    PATIENT = 2, 'Patient'
-    MANAGER = 3, 'Manager'
 
+# Role
+class RoleChoices(models.TextChoices):
+    ADMIN = 'admin', 'Admin'
+    DOCTOR = 'doctor', 'Doctor'
+    NURSE = 'nurse', 'Nurse'
+    PATIENT = 'patient', 'Patient'
+
+# Giới tính
+class GenderChoices(models.TextChoices):
+    MALE = 'male', 'Male'
+    FEMALE = 'female', 'Female'
+    OTHER = 'other', 'Other'
+
+# Người dùng
 class User(AbstractUser):
-    avatar    = CloudinaryField(null=True, blank=True)
-    user_role = models.IntegerField(
-        choices=UserRole.choices,
-        default=UserRole.PATIENT
-    )
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    avatar = CloudinaryField(null=True, blank=True)
+    role = models.CharField(max_length=20, choices=RoleChoices.choices,  default=RoleChoices.PATIENT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Dùng email để đăng nhập
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    # Override groups & permissions để tránh conflict khi dùng AbstractUser
     groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='polyclinic_users',
-        blank=True
+        Group,
+        related_name='custom_user_set',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
     )
     user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='polyclinic_users_permissions',
-        blank=True
+        Permission,
+        related_name='custom_user_set_permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
     )
 
     class Meta:
         db_table = 'user'
 
     def __str__(self):
-        return self.get_full_name() or self.username
+        return self.username
 
 
+# Bệnh nhân
+class Patient(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    date_of_birth = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GenderChoices.choices, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    blood_group = models.CharField(max_length=10, blank=True, null=True)
+    medical_history = models.TextField(blank=True, null=True)
+    insurance_number = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        db_table = 'patient'
+
+    def __str__(self):
+        return self.user.username
+
+
+# Chuyên khoa
 class Specialty(models.Model):
-    name        = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    icon = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         db_table = 'specialty'
@@ -44,85 +80,31 @@ class Specialty(models.Model):
         return self.name
 
 
+# Bác sĩ
 class Doctor(models.Model):
-    user      = models.OneToOneField(User, on_delete=models.CASCADE, related_name='doctor_profile')
-    specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, related_name='doctors',null=True)
-    degree    = models.CharField(max_length=255, blank=True, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True)
+    degree = models.CharField(max_length=255,default='')
     description = models.TextField(blank=True, null=True)
-    fee         = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     active_online = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'doctor'
 
-    def save(self, *args, **kwargs):
-        self.user.user_role = UserRole.DOCTOR
-        self.user.save()
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return self.user.get_full_name() or self.user.username
+        return self.user.username
 
 
-class Patient(models.Model):
-    user             = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile')
-    dob              = models.DateField(blank=True, null=True)
-    gender           = models.CharField(max_length=10, blank=True, null=True)
-    address          = models.CharField(max_length=255, blank=True, null=True)
-    medical_history  = models.TextField(blank=True, null=True)
-    allergy          = models.TextField(blank=True, null=True)
-    insurance_number = models.CharField(max_length=100, blank=True, null=True)
+# Y tá
+class Nurse(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    description = models.TextField(blank=True, null=True)
+    work_room = models.CharField(max_length=100, blank=True, null=True)
+    active_online = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'patient'
-
-    def save(self, *args, **kwargs):
-        self.user.user_role = UserRole.PATIENT
-        self.user.save()
-        super().save(*args, **kwargs)
+        db_table = 'nurse'
 
     def __str__(self):
-        return self.user.get_full_name() or self.user.username
-
-class Manager(models.Model):
-    user      = models.OneToOneField(User, on_delete=models.CASCADE, related_name='manager_profile')
-    hire_date = models.DateField(blank=True, null=True)  # Ngày vào làm
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        db_table = 'manager'
-
-    def save(self, *args, **kwargs):
-        self.user.user_role = UserRole.MANAGER
-        self.user.save()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.user.get_full_name() or self.user.username
-
-class WorkSchedule(models.Model):
-    doctor        = models.ForeignKey(Doctor,on_delete=models.CASCADE,related_name='work_schedule')
-    ngay          = models.DateField()
-    start_time   = models.TimeField()
-    end_time  = models.TimeField()
-
-    class Meta:
-        db_table = 'work_schedule'
-
-    def __str__(self):
-        return f"{self.doctor.user.get_full_name()} - {self.ngay}"
-
-class Appointment(models.Model):
-    patient       = models.ForeignKey(Patient,on_delete=models.CASCADE,related_name='appointments')
-    doctor        = models.ForeignKey(Doctor,on_delete=models.CASCADE,related_name='appointments',)
-    work_schedule = models.ForeignKey(WorkSchedule,on_delete=models.SET_NULL,null=True,related_name='appointments',)
-    appointment_time = models.DateTimeField()
-    status    = models.CharField(max_length=50, blank=True, null=True)
-    reason    = models.TextField(blank=True, null=True)
-    examination_method     = models.CharField(max_length=50, blank=True, null=True)
-
-    class Meta:
-        db_table = 'apointment'
-
-    def __str__(self):
-        return f"Lịch hẹn {self.id} - {self.patient.user.get_full_name()}"
+        return self.user.username

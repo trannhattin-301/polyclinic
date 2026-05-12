@@ -79,9 +79,9 @@ pymysql.version_info = (2, 2, 1, 'final', 0)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'polyclinicdb',
+        'NAME': 'polyclinic_db',
         'USER': 'root',
-        'PASSWORD': 'admin123',
+        'PASSWORD': 'thanhnh05@',
         'HOST': ''
     }
 }
