@@ -26,8 +26,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
-        db_table = 'user'
-
+        pass
     def __str__(self):
         return self.username
 
@@ -43,8 +42,7 @@ class Patient(models.Model):
     insurance_number = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
-        db_table = 'patient'
-
+        pass
     def __str__(self):
         return self.user.username
 
@@ -56,8 +54,7 @@ class Specialty(models.Model):
     icon = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        db_table = 'specialty'
-
+        pass
     def __str__(self):
         return self.name
 
@@ -72,8 +69,7 @@ class Doctor(models.Model):
     active_online = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'doctor'
-
+        pass
     def __str__(self):
         return self.user.username
 
@@ -86,7 +82,6 @@ class Nurse(models.Model):
     active_online = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'nurse'
-
+        pass
     def __str__(self):
         return self.user.username
