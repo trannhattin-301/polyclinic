@@ -1,10 +1,26 @@
-from django.shortcuts import render
-from rest_framework import viewsets,generics
-from polyclinic.models import Patient,Doctor,User,Specialty
-from polyclinic import serializers
+from rest_framework import viewsets
+from polyclinic.models import User, Doctor, Patient, Specialty, Nurse
+from polyclinic.serializers import (
+    UserSerializer, DoctorSerializer,
+    PatientSerializer, SpecialtySerializer, NurseSerializer
+)
 
-# Create your views here.
-class SpecialtyViewSet(viewsets.ModelViewSet,generics.ListAPIView):
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class SpecialtyViewSet(viewsets.ModelViewSet):
     queryset = Specialty.objects.all()
-    serializer_class = serializers.SpecialtySerializer
+    serializer_class = SpecialtySerializer
 
+class DoctorViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.select_related('user', 'specialty').all()
+    serializer_class = DoctorSerializer
+
+class PatientViewSet(viewsets.ModelViewSet):
+    queryset = Patient.objects.select_related('user').all()
+    serializer_class = PatientSerializer
+
+class NurseViewSet(viewsets.ModelViewSet):
+    queryset = Nurse.objects.select_related('user').all()
+    serializer_class = NurseSerializer
