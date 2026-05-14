@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import cloudinary
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'polyclinic.apps.PolyclinicConfig',
     'rest_framework',
-    'drf_yasg'
+    'drf_yasg',
+    'cloudinary',
+    'oauth2_provider'
 ]
 
 MIDDLEWARE = [
@@ -88,6 +90,21 @@ DATABASES = {
 
 # Thay thế auth.User mặc định bằng User model tùy chỉnh của polyclinic
 AUTH_USER_MODEL = 'polyclinic.User'
+
+
+# dùng cho avatar
+cloudinary.config(
+    cloud_name="dn57avccb",
+    api_key="434147792735832",
+    api_secret="qqSCHsvqK_b5XaYUBwKVULUKjPI"
+)
+
+# dùng cho oauth2
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
