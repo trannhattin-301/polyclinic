@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'polyclinic.apps.PolyclinicConfig',
+    'rest_framework',
+    'drf_yasg'
 ]
 
 MIDDLEWARE = [
@@ -77,13 +79,15 @@ pymysql.version_info = (2, 2, 1, 'final', 0)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'polyclinicdb',
+        'NAME': 'polyclinic_db',
         'USER': 'root',
-        'PASSWORD': 'admin123',
+        'PASSWORD': 'thanhnh05@',
         'HOST': ''
     }
 }
 
+# Thay thế auth.User mặc định bằng User model tùy chỉnh của polyclinic
+AUTH_USER_MODEL = 'polyclinic.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
