@@ -1,9 +1,8 @@
+from django.db.models import IntegerChoices
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 
-<<<<<<< Updated upstream
-=======
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -13,36 +12,8 @@ class BaseModel(models.Model):
         abstract = True
 
 AbstractUser.username.field.error_messages["unique"] = 'Tên đã tồn tại !'
->>>>>>> Stashed changes
 
-# Role
-class RoleChoices(models.TextChoices):
-    DOCTOR = 'doctor', 'Doctor'
-    NURSE = 'nurse', 'Nurse'
-    PATIENT = 'patient', 'Patient'
-
-# Giới tính
-class GenderChoices(models.TextChoices):
-    MALE = 'male', 'Male'
-    FEMALE = 'female', 'Female'
-    OTHER = 'other', 'Other'
-
-# Người dùng
 class User(AbstractUser):
-<<<<<<< Updated upstream
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    avatar = CloudinaryField(null=True, blank=True)
-    role = models.CharField(max_length=20, choices=RoleChoices.choices,  default=RoleChoices.PATIENT)
-    created_at = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
-
-    class Meta:
-        pass
-    def __str__(self):
-        return self.username
-=======
     avatar    = CloudinaryField(null=True, blank=True)
     phone = models.CharField(max_length=10, blank=True, null=True,unique=True)
     email = models.EmailField(max_length=255, blank=True, null=True,unique=True)
@@ -56,73 +27,19 @@ class User(AbstractUser):
         MALE="male"
         FEMALE="female"
         OTHER="other"
->>>>>>> Stashed changes
 
     role = models.CharField(choices=Role.choices, default=Role.PATIENT, max_length=10)
     gender = models.CharField(choices=Gender.choices, default=Gender.OTHER, max_length=10,null=True,blank=True)
     dob = models.DateField(blank=True, null=True)
 
-<<<<<<< Updated upstream
-# Bệnh nhân
-class Patient(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    date_of_birth = models.DateField(blank=True, null=True)
-    gender = models.CharField(max_length=10, choices=GenderChoices.choices, blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    blood_group = models.CharField(max_length=10, blank=True, null=True)
-    medical_history = models.TextField(blank=True, null=True)
-    insurance_number = models.CharField(max_length=50, blank=True, null=True)
-
-    class Meta:
-        pass
-    def __str__(self):
-        return self.user.username
-
-
-# Chuyên khoa
-class Specialty(models.Model):
-    name = models.CharField(max_length=100)
-=======
 class Specialty(BaseModel):
     name        = models.CharField(max_length=100, unique=True)
->>>>>>> Stashed changes
     description = models.TextField(blank=True, null=True)
-    icon = models.CharField(max_length=100, blank=True, null=True)
 
-    class Meta:
-        pass
     def __str__(self):
         return self.name
 
 
-<<<<<<< Updated upstream
-# Bác sĩ
-class Doctor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True)
-    degree = models.CharField(max_length=255,default='')
-    description = models.TextField(blank=True, null=True)
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2,default=0)
-    active_online = models.BooleanField(default=False)
-
-    class Meta:
-        pass
-    def __str__(self):
-        return self.user.username
-
-
-# Y tá
-class Nurse(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    description = models.TextField(blank=True, null=True)
-    work_room = models.CharField(max_length=100, blank=True, null=True)
-    active_online = models.BooleanField(default=False)
-
-    class Meta:
-        pass
-    def __str__(self):
-        return self.user.username
-=======
 class ServicesSpecialty(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -196,4 +113,3 @@ class TimeSlot(BaseModel):
     def __str__(self):
         return f"{self.work_schedule.date} | {self.start_time} - {self.end_time} ({self.status})"
 
->>>>>>> Stashed changes
