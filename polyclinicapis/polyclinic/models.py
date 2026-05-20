@@ -18,14 +18,14 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, blank=True, null=True,unique=True)
 
     class Role(models.TextChoices):
-        PATIENT="patient"
-        DOCTOR="doctor"
-        NURSER="nurser"
+        PATIENT="patient", "Bệnh nhân"
+        DOCTOR="doctor", "Bác sĩ"
+        NURSER="nurser", "Y tá"
 
     class Gender(models.TextChoices):
-        MALE="male"
-        FEMALE="female"
-        OTHER="other"
+        MALE = "male", "Nam"
+        FEMALE = "female", "Nữ"
+        OTHER = "other", "Khác"
 
     role = models.CharField(choices=Role.choices, default=Role.PATIENT, max_length=10)
     gender = models.CharField(choices=Gender.choices, default=Gender.OTHER, max_length=10,null=True,blank=True)
@@ -43,13 +43,13 @@ class ServicesSpecialty(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(decimal_places=2, max_digits=10, default=0)
-    Specialty=models.ManyToManyField(Specialty,blank=True)
+    specialties=models.ManyToManyField(Specialty,blank=True)
 
 class StaffProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE,related_name="staff_profile")
     specialties = models.ManyToManyField(Specialty,blank=True,through="staffSpecialty")
     degree=models.CharField(max_length=100,blank=True,null=True)
-    experience=models.TextField(blank=True,null=True)
+    experience=models.IntegerField(blank=True,null=True)
     fee=models.FloatField(blank=True,null=True,default=0)
 
     def __str__(self):
@@ -85,7 +85,7 @@ class PatientProfile(BaseModel):
 
 class WorkSchedule(BaseModel):
     staff_profile = models.ForeignKey("StaffProfile", on_delete=models.CASCADE,related_name="work_schedule")
-    date = models.DateField(blank=True, null=True)
+    date = models.DateField()
 
     class Meta:
         unique_together = [("staff_profile", "date")]
@@ -112,3 +112,125 @@ class TimeSlot(BaseModel):
     def __str__(self):
         return f"{self.work_schedule.date} | {self.start_time} - {self.end_time} ({self.status})"
 
+class Appointment(BaseModel):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Chờ xác nhận"
+        CONFIRMED = "confirmed", "Đã xác nhận"
+        IN_PROGRESS = "in_progress", "Đang khám"
+        COMPLETED = "completed", "Hoàn thành"
+        CANCELLED = "cancelled", "Đã hủy"
+
+    patient = models.ForeignKey(User, on_delete=models.CASCADE,related_name="appointment_patient")
+    disease_description=models.TextField(blank=True, null=True)
+    status=models.CharField(choices=Status.choices, default=Status.PENDING, max_length=20)
+    time_slot = models.OneToOneField(TimeSlot, on_delete=models.CASCADE,related_name="appointment_time_slot")
+    services=models.ManyToManyField(ServicesSpecialty,blank=True,related_name="appointment_services")
+
+    class Meta:
+        ordering = ["-created_date"]
+
+    def __str__(self):
+        return f"{self.patient} - {self.time_slot}"
+
+    @property
+    def doctor(self):
+        return self.time_slot.work_schedule.staff_profile
+
+class MedicalRecord(BaseModel):
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE,related_name="medical_record")
+    diagnosis=models.TextField()
+    medical_notes=models.TextField(blank=True, null=True)
+    follow_up_date=models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Bệnh án: {self.appointment.patient.get_full_name()}"
+
+    @property
+    def doctor(self):
+        return self.appointment.doctor
+
+class MedicineCategory(BaseModel):
+    name        = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+class Medicine(BaseModel):
+    class Unit(models.TextChoices):
+        TABLET = "tablet", "Viên"
+        CAPSULE = "capsule", "Nang"
+        BOTTLE = "bottle", "Chai"
+        TUBE = "tube", "Tuýp"
+        VIAL = "vial", "Lọ tiêm"
+        PACK = "pack", "Gói"
+        OTHER = "other", "Khác"
+
+    category = models.ForeignKey(MedicineCategory, on_delete=models.SET_NULL, null=True, blank=True,related_name="medicine_category")
+    name = models.CharField(max_length=200)
+    ingredient = models.TextField(blank=True, null=True, help_text="Hoạt chất")
+    description = models.TextField(blank=True, null=True)
+    unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.TABLET)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    stock = models.PositiveIntegerField(default=0, help_text="Số lượng tồn kho")
+
+    def __str__(self):
+        return f"{self.name} ({self.get_unit_display()})"
+
+    @property
+    def is_available(self):
+        return self.stock > 0
+
+class Prescription(BaseModel):
+    medical_record = models.OneToOneField(MedicalRecord, on_delete=models.CASCADE, related_name="prescription_medical_record")
+    notes          = models.TextField(blank=True, null=True, help_text="Lưu ý chung của đơn thuốc")
+
+    def __str__(self):
+        return f"Đơn thuốc: {self.medical_record.appointment.patient.get_full_name()}"
+
+    @property
+    def total_price(self):
+        return sum(item.subtotal for item in self.items.all())
+
+
+class PrescriptionItem(BaseModel):
+    class Frequency(models.TextChoices):
+        ONCE_DAILY   = "1x_day",  "1 lần/ngày"
+        TWICE_DAILY  = "2x_day",  "2 lần/ngày"
+        THREE_DAILY  = "3x_day",  "3 lần/ngày"
+        FOUR_DAILY   = "4x_day",  "4 lần/ngày"
+        AS_NEEDED    = "as_needed", "Khi cần"
+
+    class Timing(models.TextChoices):
+        BEFORE_MEAL = "before_meal", "Trước ăn"
+        AFTER_MEAL  = "after_meal",  "Sau ăn"
+        WITH_MEAL   = "with_meal",   "Trong khi ăn"
+        BEDTIME     = "bedtime",     "Trước khi ngủ"
+
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name="items")
+    medicine     = models.ForeignKey(Medicine, on_delete=models.PROTECT, related_name="prescription_items")
+    quantity     = models.PositiveIntegerField(help_text="Tổng số lượng")
+    dosage       = models.CharField(max_length=50, help_text="Liều mỗi lần, vd: 1 viên, 2 viên")
+    frequency    = models.CharField(max_length=20, choices=Frequency.choices)
+    timing       = models.CharField(max_length=20, choices=Timing.choices, blank=True)
+    duration_days= models.IntegerField(help_text="Số ngày uống")
+    notes        = models.TextField(blank=True, null=True, help_text="Ghi chú riêng cho thuốc này")
+
+    class Meta:
+        unique_together = ("prescription", "medicine")
+
+    def __str__(self):
+        return f"{self.medicine.name} x{self.quantity}"
+
+    @property
+    def subtotal(self):
+        return self.medicine.price * self.quantity
+
+class TestResult(BaseModel):
+    medical_record = models.ForeignKey(MedicalRecord, on_delete=models.PROTECT, related_name="test_results")
+    test_name = models.CharField(max_length=200)
+    result = models.TextField()
+    file = CloudinaryField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.test_name} - {self.medical_record}"
