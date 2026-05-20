@@ -1,4 +1,3 @@
-from django.db.models import IntegerChoices
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
