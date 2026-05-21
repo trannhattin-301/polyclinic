@@ -4,9 +4,8 @@ export default StyleSheet.create({
     header: {
         height: 150,
         backgroundColor: '#1E88E5',
-        justifyContent: 'flex-start', // đẩy lên trên
-        alignItems: 'flex-start',     // đẩy sang trái
-
+        justifyContent: 'flex-start', 
+        alignItems: 'flex-start',     
         paddingTop: 50,
         paddingLeft: 15,
     },

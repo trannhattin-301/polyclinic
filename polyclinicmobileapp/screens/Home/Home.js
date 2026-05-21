@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList  } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { BottomNavigation, Searchbar, Card, Icon } from 'react-native-paper';
 import styles from './Styles';
 import { FontAwesome } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ const ProfileRoute = () => <Text>Hồ sơ</Text>;
 const NotificationsRoute = () => <Text>Thông báo</Text>;
 const AccountRoute = () => <Text>Tài khoản</Text>;
 
-const Home = () => {
+const Home = ({ navigation }) => {
     const [index, setIndex] = useState(0);
     const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -77,7 +77,6 @@ const Home = () => {
                 />
             </View>
 
-
             <View style={{ flex: 1 }}>
                 <FlatList
                     data={menuItems}
@@ -86,7 +85,14 @@ const Home = () => {
                     columnWrapperStyle={styles.menuRow}
                     scrollEnabled={false}
                     renderItem={({ item }) => (
-                        <Card style={styles.menuCard}>
+                        <Card
+                            style={styles.menuCard}
+                            onPress={() => {
+                                if (item.key === 'appointment') {
+                                    navigation.navigate('SelectSpecialty');
+                                }
+                            }}
+                        >
                             <Card.Content style={styles.menuCardContent}>
                                 <FontAwesome name={item.icon} size={30} color="#1E88E5" />
                                 <Text style={styles.menuLabel}>{item.label}</Text>
@@ -94,10 +100,14 @@ const Home = () => {
                         </Card>
                     )}
                 />
-                <BottomNavigation
+                <BottomNavigation.Bar
                     navigationState={{ index, routes }}
-                    onIndexChange={setIndex}
-                    renderScene={renderScene}
+                    onTabPress={({ route }) => {
+                        const newIndex = routes.findIndex(r => r.key === route.key);
+                        setIndex(newIndex);
+
+                        if (route.key === 'account') navigation.navigate('Profile');
+                    }}
                 />
             </View>
         </View>

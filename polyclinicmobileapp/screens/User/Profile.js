@@ -10,7 +10,7 @@ const ProfileRoute = () => <Text>Hồ sơ</Text>;
 const NotificationsRoute = () => <Text>Thông báo</Text>;
 const AccountRoute = () => <Text>Tài khoản</Text>;
 
-const Profile = () => {
+const Profile = ({ navigation }) => {
     const [index, setIndex] = useState(0);
 
     const [routes] = useState([
@@ -63,6 +63,8 @@ const Profile = () => {
                 onTabPress={({ route }) => {
                     const newIndex = routes.findIndex(r => r.key === route.key);
                     setIndex(newIndex);
+
+                    if (route.key === 'home') navigation.navigate('Home');
                 }}
             />
 
