@@ -29,4 +29,38 @@ export default StyleSheet.create({
     color: '#2563EB',
     fontSize: 14,
   },
+  header: {
+    backgroundColor: '#1E88E5',
+    paddingTop: 50,
+    paddingBottom: 24,
+    alignItems: 'center',
+    gap: 8,
+  },
+  name: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  email: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+  },
+  card: {
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  menuCard: {
+    flex: 1,
+    margin: 6,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  button: {
+    marginBottom: 8,
+  },
 });

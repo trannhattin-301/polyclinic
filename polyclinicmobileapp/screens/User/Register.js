@@ -5,9 +5,9 @@ import { useNavigation } from '@react-navigation/native';
 import styles from './Styles';
 
 const userInfo = [
-  { field: 'fullName',        label: 'Họ và tên',          icon: 'account' },
-  { field: 'email',           label: 'Email',               icon: 'email',      keyboardType: 'email-address' },
-  { field: 'password',        label: 'Mật khẩu',            icon: 'lock',       secureTextEntry: true },
+  { field: 'fullName', label: 'Họ và tên', icon: 'account' },
+  { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
+  { field: 'password', label: 'Mật khẩu', icon: 'lock', secureTextEntry: true },
   { field: 'confirmPassword', label: 'Xác nhận mật khẩu',  icon: 'lock-check', secureTextEntry: true },
 ];
 
