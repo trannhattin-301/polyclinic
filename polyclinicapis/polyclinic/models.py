@@ -1,3 +1,4 @@
+from cryptography.hazmat.asn1 import Null
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
@@ -85,7 +86,8 @@ class PatientProfile(BaseModel):
 
 class WorkSchedule(BaseModel):
     staff_profile = models.ForeignKey("StaffProfile", on_delete=models.CASCADE,related_name="work_schedules")
-    date = models.DateField()
+    date = models.DateField(null=True)
+
 
     class Meta:
         unique_together = [("staff_profile", "date")]

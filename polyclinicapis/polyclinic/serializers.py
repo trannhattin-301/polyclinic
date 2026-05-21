@@ -63,7 +63,7 @@ class SimpleUserSerializer(UserSerializer):
 class SpecialtySerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialty
-        fields = ['id', 'name', 'description', 'active']
+        fields = ['id', 'name', 'description']
 
 
 # Services Specialty
