@@ -13,6 +13,8 @@ class UserSerializer(serializers.ModelSerializer):
                   'email', 'phone', 'role', 'gender', 'dob', 'avatar']
         extra_kwargs = {
             'password': {'write_only': True},
+            'username': {'write_only': True},
+            'avatar': {'required': False},
         }
 
     def to_representation(self, instance):
@@ -22,9 +24,22 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        profile_data = validated_data.pop('profile',{})
         user = User(**validated_data)
-        user.set_password(validated_data['password'])
+        user.set_password(user.password)
         user.save()
+        if user.role in [User.Role.DOCTOR, User.Role.NURSE]:
+            StaffProfile.objects.create(user=user)
+        elif user.role ==User.Role.PATIENT:
+            PatientProfile.objects.create(
+                user=user,
+                height=profile_data.get('height'),
+                weight=profile_data.get('weight'),
+                insurance_number=profile_data.get('insurance_number'),
+                insurance_expiry_date=profile_data.get('insurance_expiry_date'),
+                blood_group=profile_data.get('blood_group'),
+                allergy_history=profile_data.get('allergy_history'),
+            )
         return user
 
     def update(self, instance, validated_data):
@@ -48,7 +63,7 @@ class SimpleUserSerializer(UserSerializer):
 class SpecialtySerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialty
-        fields = ['id', 'name', 'description', 'active']
+        fields = ['id', 'name', 'description']
 
 
 # Services Specialty
