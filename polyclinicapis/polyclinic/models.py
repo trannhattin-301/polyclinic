@@ -20,7 +20,7 @@ class User(AbstractUser):
     class Role(models.TextChoices):
         PATIENT="patient", "Bệnh nhân"
         DOCTOR="doctor", "Bác sĩ"
-        NURSER="nurser", "Y tá"
+        NURSE="nurse", "Y tá"
 
     class Gender(models.TextChoices):
         MALE = "male", "Nam"
@@ -50,7 +50,7 @@ class StaffProfile(BaseModel):
     specialties = models.ManyToManyField(Specialty,blank=True,through="staffSpecialty")
     degree=models.CharField(max_length=100,blank=True,null=True)
     experience=models.IntegerField(blank=True,null=True)
-    fee=models.FloatField(blank=True,null=True,default=0)
+    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.user.get_full_name()
@@ -84,7 +84,7 @@ class PatientProfile(BaseModel):
         return self.user.get_full_name()
 
 class WorkSchedule(BaseModel):
-    staff_profile = models.ForeignKey("StaffProfile", on_delete=models.CASCADE,related_name="work_schedule")
+    staff_profile = models.ForeignKey("StaffProfile", on_delete=models.CASCADE,related_name="work_schedules")
     date = models.DateField()
 
     class Meta:
@@ -145,9 +145,11 @@ class MedicalRecord(BaseModel):
     def __str__(self):
         return f"Bệnh án: {self.appointment.patient.get_full_name()}"
 
-    @property
-    def doctor(self):
+    def get_doctor(self):
         return self.appointment.doctor
+
+    def get_patient(self):
+        return self.appointment.patient
 
 class MedicineCategory(BaseModel):
     name        = models.CharField(max_length=100, unique=True)
@@ -166,20 +168,34 @@ class Medicine(BaseModel):
         PACK = "pack", "Gói"
         OTHER = "other", "Khác"
 
-    category = models.ForeignKey(MedicineCategory, on_delete=models.SET_NULL, null=True, blank=True,related_name="medicine_category")
+    category = models.ForeignKey(MedicineCategory, on_delete=models.SET_NULL, null=True, blank=True,related_name="medicines")
     name = models.CharField(max_length=200)
     ingredient = models.TextField(blank=True, null=True, help_text="Hoạt chất")
     description = models.TextField(blank=True, null=True)
     unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.TABLET)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock = models.PositiveIntegerField(default=0, help_text="Số lượng tồn kho")
+    expiry_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.get_unit_display()})"
 
-    @property
     def is_available(self):
         return self.stock > 0
+
+    def is_low_stock(self):
+        return self.stock <= 100
+
+    def is_expired(self):
+        from django.utils import timezone
+        return self.expiry_date and self.expiry_date < timezone.now().date()
+
+    def is_near_expiry(self):
+        from django.utils import timezone
+        if not self.expiry_date:
+            return False
+        delta = self.expiry_date - timezone.now().date()
+        return 0 <= delta.days <= 30
 
 class Prescription(BaseModel):
     medical_record = models.OneToOneField(MedicalRecord, on_delete=models.CASCADE, related_name="prescription_medical_record")
@@ -230,7 +246,26 @@ class TestResult(BaseModel):
     medical_record = models.ForeignKey(MedicalRecord, on_delete=models.PROTECT, related_name="test_results")
     test_name = models.CharField(max_length=200)
     result = models.TextField()
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,related_name="test_results_performed")
+    performed_at = models.DateTimeField(null=True, blank=True)
     file = CloudinaryField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.test_name} - {self.medical_record}"
+
+class Invoice(BaseModel):
+    class Status(models.TextChoices):
+        UNPAID = "unpaid", "Chưa thanh toán"
+        PAID   = "paid",   "Đã thanh toán"
+
+    class PaymentMethod(models.TextChoices):
+        CASH     = "cash",     "Tiền mặt"
+        TRANSFER = "transfer", "Chuyển khoản"
+        INSURANCE= "insurance","Bảo hiểm"
+
+    appointment    = models.OneToOneField(Appointment, on_delete=models.PROTECT, related_name="invoice")
+    status         = models.CharField(max_length=20, choices=Status.choices, default=Status.UNPAID)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, blank=True)
+    paid_at        = models.DateTimeField(null=True, blank=True)
+    total_amount   = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    notes          = models.TextField(blank=True, null=True)
