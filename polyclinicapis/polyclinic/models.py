@@ -1,4 +1,3 @@
-from cryptography.hazmat.asn1 import Null
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField

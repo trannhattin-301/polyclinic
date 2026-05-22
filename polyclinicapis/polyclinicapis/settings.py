@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-lyfb%jqg(14p42ks-bo4s4q05moh1qo0af^b60#d9ld!f^e+sr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'polyclinic_db',
         'USER': 'root',
-        'PASSWORD': 'admin123',
+        'PASSWORD': 'thanhnh05@',
         'HOST': ''
     }
 }

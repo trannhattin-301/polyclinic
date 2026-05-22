@@ -24,13 +24,17 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        profile_data = validated_data.pop('profile',{})
+        profile_data = validated_data.pop('profile', {})
+        password = validated_data.pop('password')
+
         user = User(**validated_data)
-        user.set_password(user.password)
+        user.set_password(password)
         user.save()
+
         if user.role in [User.Role.DOCTOR, User.Role.NURSE]:
             StaffProfile.objects.create(user=user)
-        elif user.role ==User.Role.PATIENT:
+
+        elif user.role == User.Role.PATIENT:
             PatientProfile.objects.create(
                 user=user,
                 height=profile_data.get('height'),
@@ -40,6 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
                 blood_group=profile_data.get('blood_group'),
                 allergy_history=profile_data.get('allergy_history'),
             )
+
         return user
 
     def update(self, instance, validated_data):

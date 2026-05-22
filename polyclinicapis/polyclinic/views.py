@@ -6,24 +6,26 @@ from polyclinic.models import User, Specialty, ServicesSpecialty, StaffProfile, 
 from polyclinic import perms
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+class UserViewSet(viewsets.GenericViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def get_permissions(self):
-        if self.action == 'current_user':
-            return [permissions.IsAuthenticated()]
-        return [permissions.AllowAny()]
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     @action(methods=['get', 'patch'], url_path='current-user', detail=False)
     def current_user(self, request):
-        u = request.user
-        if request.method.__eq__('PATCH'):
-            s = serializers.UserSerializer(u, data=request.data, partial=True)
-            s.is_valid(raise_exception=True)
-            u = s.save()
-        return Response(serializers.UserSerializer(u).data, status=status.HTTP_200_OK)
+        user = request.user
+
+        if request.method == 'PATCH':
+            serializer = serializers.UserSerializer(user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+
+        return Response(serializers.UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
 class SpecialtyViewSet(viewsets.ViewSet, generics.ListAPIView):
