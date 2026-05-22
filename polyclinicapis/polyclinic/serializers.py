@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (
     User, Specialty, ServicesSpecialty,
     StaffProfile, StaffSpecialty,
-    PatientProfile, WorkSchedule, TimeSlot,Appointment
+    PatientProfile, WorkSchedule, TimeSlot, Appointment,
+    MedicalRecord, MedicineCategory, Medicine
 )
 
 # User
@@ -240,4 +241,77 @@ class AppointmentSerializer(serializers.ModelSerializer):
         data['time_slot_detail'] = {'id': instance.time_slot.id, 'start_time': instance.time_slot.start_time, 'end_time': instance.time_slot.end_time}
         data['work_schedule'] = {'id': instance.time_slot.work_schedule.id, 'date': instance.time_slot.work_schedule.date}
         data['services_detail'] = [{'id': service.id, 'name': service.name, 'price': service.price} for service in instance.services.all()]
+        return data
+
+
+# Medical Record
+class MedicalRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicalRecord
+        fields = [
+            'id', 'appointment', 'diagnosis', 'medical_notes',
+            'follow_up_date', 'active', 'created_date', 'updated_date'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        appointment = instance.appointment
+
+        data['appointment_detail'] = {
+            'id': appointment.id,
+            'status': appointment.status,
+            'disease_description': appointment.disease_description,
+            'created_date': appointment.created_date,
+            'time_slot': {
+                'id': appointment.time_slot.id,
+                'start_time': appointment.time_slot.start_time,
+                'end_time': appointment.time_slot.end_time,
+            },
+            'work_schedule': {
+                'id': appointment.time_slot.work_schedule.id,
+                'date': appointment.time_slot.work_schedule.date,
+            },
+        }
+        data['patient'] = {
+            'id': appointment.patient.id,
+            'name': appointment.patient.get_full_name() or appointment.patient.username,
+        }
+        data['doctor'] = {
+            'id': appointment.doctor.id,
+            'name': appointment.doctor.user.get_full_name() or appointment.doctor.user.username,
+        }
+
+        return data
+
+# Medicine
+class MedicineCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineCategory
+        fields = ['id', 'name', 'description', 'active']
+
+
+class MedicineSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=MedicineCategory.objects.filter(active=True),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Medicine
+        fields = [
+            'id', 'category', 'name', 'ingredient', 'description',
+            'unit', 'price', 'stock', 'expiry_date', 'active'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['category'] = (
+            MedicineCategorySerializer(instance.category).data
+            if instance.category else None
+        )
+        data['is_available'] = instance.is_available()
+        data['is_low_stock'] = instance.is_low_stock()
+        data['is_expired'] = instance.is_expired()
+        data['is_near_expiry'] = instance.is_near_expiry()
         return data
