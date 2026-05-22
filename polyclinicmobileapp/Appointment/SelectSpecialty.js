@@ -1,67 +1,70 @@
-import React, { useState } from 'react';
-import { View, FlatList } from 'react-native';
-import { BottomNavigation, Card, Searchbar } from 'react-native-paper';
-import styles from './Styles';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, ActivityIndicator } from 'react-native';
+import { BottomNavigation, Card, Searchbar, Text } from 'react-native-paper';
 
-const specialties = [
-    { id: 1, name: 'Tim mạch' },
-    { id: 2, name: 'Nội tổng quát' },
-    { id: 3, name: 'Ngoại tổng quát' },
-    { id: 4, name: 'Nhi khoa' },
-    { id: 5, name: 'Da liễu' },
-];
+import styles from './Styles';
+import Apis, { endpoints } from '../configs/Apis';
 
 const routes = [
-    { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
-    { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
-    { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
-    { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
-    { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
+  { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
+  { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
+  { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
+  { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
+  { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
 ];
 
 const SelectSpecialty = ({ navigation }) => {
-    const [index, setIndex] = useState(0);
-    const [searchQuery, setSearchQuery] = useState('');
+  const [index, setIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [specialties, setSpecialties] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    const filteredSpecialties = specialties.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const loadSpecialties = async () => {
+    try {
+      setLoading(true);
+      const res = await Apis.get(endpoints.specialties);
+      setSpecialties(res.data);
+    } catch (ex) {
+      console.log('Lỗi load chuyên khoa:', ex);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleTabPress = ({ route }) => {
-        const newIndex = routes.findIndex(r => r.key === route.key);
-        setIndex(newIndex);
-    };
+  useEffect(() => { loadSpecialties(); }, []);
 
-    return (
-        <View style={{ flex: 1 }}>
-            <Searchbar
-                placeholder="Tìm chuyên khoa"
-                onChangeText={setSearchQuery}
-                value={searchQuery}
-                style={styles.searchBar}
-                inputStyle={styles.searchInput}
-            />
+  const filteredSpecialties = specialties.filter(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
-            <FlatList
-                data={filteredSpecialties}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingBottom: 10 }}
-                renderItem={({ item }) => (
-                    <Card
-                        style={{ marginHorizontal: 10, marginVertical: 6 }}
-                        onPress={() => navigation.navigate('SelectDoctor', { specialty: item })}
-                    >
-                        <Card.Title title={item.name} />
-                    </Card>
-                )}
-            />
+  const handleTabPress = ({ route }) => {
+    const newIndex = routes.findIndex(r => r.key === route.key);
+    setIndex(newIndex);
+    if (route.key === 'home') navigation.navigate('Home');
+    if (route.key === 'account') navigation.navigate('Profile');
+  };
 
-            <BottomNavigation.Bar
-                navigationState={{ index, routes }}
-                onTabPress={handleTabPress}
-            />
-        </View>
-    );
+  return (
+    <View style={{ flex: 1 }}>
+      <Searchbar placeholder="Tìm chuyên khoa" onChangeText={setSearchQuery} value={searchQuery} style={styles.searchBar} inputStyle={styles.searchInput} />
+
+      {loading ? (
+        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          data={filteredSpecialties}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 10 }}
+          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có chuyên khoa</Text>}
+          renderItem={({ item }) => (
+            <Card style={{ marginHorizontal: 10, marginVertical: 6 }} onPress={() => navigation.navigate('SelectDoctor', { specialty: item })}>
+              <Card.Title title={item.name} subtitle={item.description} />
+            </Card>
+          )}
+        />
+      )}
+
+      <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} />
+    </View>
+  );
 };
 
 export default SelectSpecialty;
