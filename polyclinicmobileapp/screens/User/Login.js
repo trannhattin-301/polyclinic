@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { ScrollView, View, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import styles from './Styles';
+import Apis, { endpoints, authApis } from '../../configs/Apis';
+import { MyDispatchContext } from '../../configs/Contexts';
 
 const userInfo = [
   { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
@@ -13,7 +17,9 @@ const Login = () => {
   const [user, setUser] = useState({});
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+
   const navigation = useNavigation();
+  const dispatch = useContext(MyDispatchContext);
 
   const validate = () => {
     for (let i of userInfo) {
@@ -22,14 +28,54 @@ const Login = () => {
         return false;
       }
     }
+
+    return true;
   };
 
-  const handleLogin = () => {
-    if (validate()) {
-      setErr('');
-      setLoading(true);
-      console.log('Đăng nhập:', user);
-      // TODO: gọi API ở đây
+  const handleLogin = async () => {
+    if (!validate()) return;
+
+    setErr('');
+    setLoading(true);
+
+    try {
+      const form = new FormData();
+
+      form.append('username', user.email);
+      form.append('password', user.password);
+      form.append('grant_type', 'password');
+      form.append('client_id', 'RXJhLWnOXCC2gMicKliU0YuDDba6XmJ9a5niIj1y');
+      form.append('client_secret', 'WxhpLQsvaaNNqHe5KtOfXyuLb2V6CujEkHGhYZvVBfV6snw46XhgHTsxvgoAIxSFAsmqaDUHmjizPM1HJugwwwWbZNp0nHoPXrtcg02B5OgHTFowycsq80doqZsSdW58');
+
+      const res = await Apis.post(endpoints.login, form, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const token = res.data.access_token;
+
+      await AsyncStorage.setItem('token', token);
+
+      const currentUser = await authApis(token).get(endpoints.currentUser);
+
+      dispatch({
+        type: 'LOGIN',
+        payload: currentUser.data,
+      });
+
+      navigation.navigate('Home');
+    } catch (ex) {
+      console.log('Lỗi đăng nhập:', ex.response?.data || ex.message);
+
+      if (ex.response?.data?.error_description) {
+        setErr(ex.response.data.error_description);
+      } else if (ex.response?.data) {
+        setErr(JSON.stringify(ex.response.data));
+      } else {
+        setErr('Không thể kết nối đến server!');
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -38,7 +84,9 @@ const Login = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Đăng nhập</Text>
 
-      <HelperText type="error" visible={!!err}>{err}</HelperText>
+      <HelperText type="error" visible={!!err}>
+        {err}
+      </HelperText>
 
       {userInfo.map(i => (
         <TextInput

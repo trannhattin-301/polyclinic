@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { ScrollView, View, TouchableOpacity } from 'react-native';
+import { ScrollView, View, TouchableOpacity, Alert } from 'react-native';
 import { Text, TextInput, Button, HelperText } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+
 import styles from './Styles';
+import Apis, { endpoints } from '../../configs/Apis';
 
 const userInfo = [
-  { field: 'fullName', label: 'Họ và tên', icon: 'account' },
+  { field: 'firstName', label: 'Họ', icon: 'account' },
+  { field: 'lastName', label: 'Tên', icon: 'account' },
   { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
+  { field: 'phone', label: 'Số điện thoại', icon: 'phone', keyboardType: 'phone-pad' },
   { field: 'password', label: 'Mật khẩu', icon: 'lock', secureTextEntry: true },
-  { field: 'confirmPassword', label: 'Xác nhận mật khẩu',  icon: 'lock-check', secureTextEntry: true },
+  { field: 'confirmPassword', label: 'Xác nhận mật khẩu', icon: 'lock-check', secureTextEntry: true },
 ];
 
 const Register = () => {
@@ -18,25 +22,44 @@ const Register = () => {
   const navigation = useNavigation();
 
   const validate = () => {
-    for (let i of userInfo) {
+    for (let i of userInfo)
       if (!user[i.field]) {
         setErr(`Vui lòng nhập ${i.label}!`);
         return false;
       }
-    }
+
     if (user.password !== user.confirmPassword) {
       setErr('Mật khẩu không khớp!');
       return false;
     }
+
     return true;
   };
 
-  const handleRegister = () => {
-    if (validate()) {
-      setErr('');
-      setLoading(true);
-      console.log('Đăng ký:', user);
-      // TODO: gọi API ở đây
+  const handleRegister = async () => {
+    if (!validate()) return;
+
+    setErr('');
+    setLoading(true);
+
+    try {
+      const form = new FormData();
+
+      form.append('username', user.email);
+      form.append('password', user.password);
+      form.append('first_name', user.firstName);
+      form.append('last_name', user.lastName);
+      form.append('email', user.email);
+      form.append('phone', user.phone);
+
+      await Apis.post(endpoints.register, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+      Alert.alert('Thành công', 'Đăng ký tài khoản thành công!');
+      navigation.navigate('Login');
+    } catch (ex) {
+      console.log('Lỗi đăng ký:', ex.response?.data || ex.message);
+      setErr(ex.response?.data ? JSON.stringify(ex.response.data) : 'Không thể kết nối đến server!');
+    } finally {
       setLoading(false);
     }
   };
@@ -62,13 +85,7 @@ const Register = () => {
         />
       ))}
 
-      <Button
-        loading={loading}
-        disabled={loading}
-        onPress={handleRegister}
-        mode="contained"
-        style={styles.button}
-      >
+      <Button loading={loading} disabled={loading} onPress={handleRegister} mode="contained" style={styles.button}>
         Đăng ký
       </Button>
 
