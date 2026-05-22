@@ -12,6 +12,9 @@ router.register('patients', views.PatientProfileViewSet, basename='patient')
 router.register('work-schedules', views.WorkScheduleViewSet, basename='work-schedules')
 router.register('time-slots', views.TimeSlotViewSet, basename='time-slots')
 router.register('appointments', views.AppointmentViewSet, basename='appointments')
+router.register('medical-records', views.MedicalRecordViewSet, basename='medical-records')
+router.register('medicine-categories', views.MedicineCategoryViewSet, basename='medicine-categories')
+router.register('medicines', views.MedicineViewSet, basename='medicines')
 
 urlpatterns = [
     path('', include(router.urls)),

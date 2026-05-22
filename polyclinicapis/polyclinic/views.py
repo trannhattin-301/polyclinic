@@ -1,8 +1,13 @@
 from rest_framework import viewsets, generics, permissions, status, parsers, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from polyclinic import serializers
-from polyclinic.models import User, Specialty, ServicesSpecialty, StaffProfile, PatientProfile, WorkSchedule, TimeSlot, Appointment
+from polyclinic.models import (
+    User, Specialty, ServicesSpecialty, StaffProfile,
+    PatientProfile, WorkSchedule, TimeSlot, Appointment, MedicalRecord,
+    MedicineCategory, Medicine
+)
 from polyclinic import perms
 
 
@@ -191,3 +196,120 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
         appointment.status = Appointment.Status.CANCELLED
         appointment.save()
         return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+
+class MedicalRecordViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.MedicalRecordSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [perms.IsDoctor()]
+
+    def get_queryset(self):
+        queryset = MedicalRecord.objects.filter(active=True).select_related(
+            'appointment',
+            'appointment__patient',
+            'appointment__time_slot',
+            'appointment__time_slot__work_schedule',
+            'appointment__time_slot__work_schedule__staff_profile',
+            'appointment__time_slot__work_schedule__staff_profile__user',
+        )
+
+        appointment_id = self.request.query_params.get('appointment_id')
+        if appointment_id:
+            queryset = queryset.filter(appointment_id=appointment_id)
+
+        user = self.request.user
+        if user.is_superuser:
+            return queryset
+
+        if user.role == User.Role.NURSE:
+            return queryset
+
+        if user.role == User.Role.DOCTOR:
+            return queryset.filter(
+                appointment__time_slot__work_schedule__staff_profile__user=user
+            )
+
+        return queryset.filter(appointment__patient=user)
+
+    def perform_create(self, serializer):
+        appointment = serializer.validated_data['appointment']
+
+        if appointment.doctor.user != self.request.user:
+            raise serializers.serializers.ValidationError(
+                {'appointment': 'Bác sĩ chỉ được tạo bệnh án cho lịch khám của mình.'}
+            )
+
+        serializer.save()
+
+
+class MedicineCategoryViewSet(viewsets.ModelViewSet):
+    queryset = MedicineCategory.objects.filter(active=True)
+    serializer_class = serializers.MedicineCategorySerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'medicines', 'medicine_detail']:
+            return [permissions.AllowAny()]
+        return [perms.IsStaff()]
+
+    @action(methods=['get'], detail=True, url_path='medicines')
+    def medicines(self, request, pk=None):
+        medicines = Medicine.objects.filter(
+            active=True,
+            category_id=pk
+        ).select_related('category')
+
+        return Response(
+            serializers.MedicineSerializer(medicines, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+    @action(methods=['get'], detail=True, url_path=r'medicines/(?P<medicine_id>[^/.]+)')
+    def medicine_detail(self, request, pk=None, medicine_id=None):
+        category = self.get_object()
+        medicine = get_object_or_404(
+            Medicine.objects.filter(active=True, category=category).select_related('category'),
+            pk=medicine_id
+        )
+
+        return Response(
+            serializers.MedicineSerializer(medicine).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class MedicineViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.MedicineSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [perms.IsStaff()]
+
+    def get_queryset(self):
+        queryset = Medicine.objects.filter(active=True).select_related('category')
+
+        category_id = self.request.query_params.get('category_id')
+        unit = self.request.query_params.get('unit')
+        available = self.request.query_params.get('available')
+        low_stock = self.request.query_params.get('low_stock')
+
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+
+        if unit:
+            queryset = queryset.filter(unit=unit)
+
+        if available == 'true':
+            queryset = queryset.filter(stock__gt=0)
+        elif available == 'false':
+            queryset = queryset.filter(stock=0)
+
+        if low_stock == 'true':
+            queryset = queryset.filter(stock__lte=100)
+        elif low_stock == 'false':
+            queryset = queryset.filter(stock__gt=100)
+
+        return queryset
