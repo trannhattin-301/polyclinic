@@ -4,7 +4,8 @@ from .models import (
     StaffProfile, StaffSpecialty,
     PatientProfile, WorkSchedule, TimeSlot, Appointment,
     MedicalRecord, MedicineCategory, Medicine,
-    Prescription, PrescriptionItem, InventoryTransaction
+    Prescription, PrescriptionItem, InventoryTransaction,
+    TestResult, Invoice
 )
 
 # User
@@ -393,6 +394,60 @@ class InventoryTransactionSerializer(serializers.ModelSerializer):
             SimpleUserSerializer(instance.created_by).data
             if instance.created_by else None
         )
+        return data
+
+
+class TestResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestResult
+        fields = [
+            'id', 'medical_record', 'test_name', 'result',
+            'performed_by', 'performed_at', 'file',
+            'active', 'created_date', 'updated_date'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['medical_record'] = {
+            'id': instance.medical_record.id,
+            'diagnosis': instance.medical_record.diagnosis,
+            'appointment_id': instance.medical_record.appointment.id,
+        }
+        data['performed_by'] = (
+            SimpleUserSerializer(instance.performed_by).data
+            if instance.performed_by else None
+        )
+        if instance.file:
+            data['file'] = instance.file.url
+        return data
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
+        fields = [
+            'id', 'appointment', 'status', 'payment_method',
+            'paid_at', 'total_amount', 'notes',
+            'active', 'created_date', 'updated_date'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        appointment = instance.appointment
+        data['appointment'] = {
+            'id': appointment.id,
+            'patient_id': appointment.patient.id,
+            'patient_name': appointment.patient.get_full_name() or appointment.patient.username,
+            'doctor_id': appointment.doctor.id,
+            'doctor_name': appointment.doctor.user.get_full_name() or appointment.doctor.user.username,
+            'status': appointment.status,
+            'date': appointment.time_slot.work_schedule.date,
+            'time_slot': {
+                'id': appointment.time_slot.id,
+                'start_time': appointment.time_slot.start_time,
+                'end_time': appointment.time_slot.end_time,
+            }
+        }
         return data
 
 # Medicine

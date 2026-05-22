@@ -11,7 +11,8 @@ from polyclinic import serializers
 from polyclinic.models import (
     User, Specialty, ServicesSpecialty, StaffProfile,
     PatientProfile, WorkSchedule, TimeSlot, Appointment, MedicalRecord,
-    MedicineCategory, Medicine, Prescription, PrescriptionItem, InventoryTransaction
+    MedicineCategory, Medicine, Prescription, PrescriptionItem, InventoryTransaction,
+    TestResult, Invoice
 )
 from polyclinic import perms
 
@@ -461,6 +462,93 @@ class InventoryTransactionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(created_by_id=created_by_id)
 
         return queryset.order_by('-created_date')
+
+
+class TestResultViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.TestResultSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [perms.IsStaff()]
+
+    def get_queryset(self):
+        queryset = TestResult.objects.filter(active=True).select_related(
+            'medical_record',
+            'medical_record__appointment',
+            'medical_record__appointment__patient',
+            'medical_record__appointment__time_slot',
+            'medical_record__appointment__time_slot__work_schedule',
+            'medical_record__appointment__time_slot__work_schedule__staff_profile',
+            'medical_record__appointment__time_slot__work_schedule__staff_profile__user',
+            'performed_by',
+        )
+
+        medical_record_id = self.request.query_params.get('medical_record_id')
+        appointment_id = self.request.query_params.get('appointment_id')
+        performed_by_id = self.request.query_params.get('performed_by_id')
+
+        if medical_record_id:
+            queryset = queryset.filter(medical_record_id=medical_record_id)
+
+        if appointment_id:
+            queryset = queryset.filter(medical_record__appointment_id=appointment_id)
+
+        if performed_by_id:
+            queryset = queryset.filter(performed_by_id=performed_by_id)
+
+        user = self.request.user
+        if user.is_superuser or user.role == User.Role.NURSE:
+            return queryset
+
+        if user.role == User.Role.DOCTOR:
+            return queryset.filter(
+                medical_record__appointment__time_slot__work_schedule__staff_profile__user=user
+            )
+
+        return queryset.filter(medical_record__appointment__patient=user)
+
+    def perform_create(self, serializer):
+        serializer.save(performed_by=self.request.user)
+
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.InvoiceSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [perms.IsStaff()]
+
+    def get_queryset(self):
+        queryset = Invoice.objects.filter(active=True).select_related(
+            'appointment',
+            'appointment__patient',
+            'appointment__time_slot',
+            'appointment__time_slot__work_schedule',
+            'appointment__time_slot__work_schedule__staff_profile',
+            'appointment__time_slot__work_schedule__staff_profile__user',
+        )
+
+        appointment_id = self.request.query_params.get('appointment_id')
+        status_param = self.request.query_params.get('status')
+        payment_method = self.request.query_params.get('payment_method')
+
+        if appointment_id:
+            queryset = queryset.filter(appointment_id=appointment_id)
+
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+
+        user = self.request.user
+        if user.is_superuser or user.role in [User.Role.DOCTOR, User.Role.NURSE]:
+            return queryset
+
+        return queryset.filter(appointment__patient=user)
 
 
 class MedicineCategoryViewSet(viewsets.ModelViewSet):

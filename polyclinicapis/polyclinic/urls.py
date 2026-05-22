@@ -15,6 +15,8 @@ router.register('appointments', views.AppointmentViewSet, basename='appointments
 router.register('medical-records', views.MedicalRecordViewSet, basename='medical-records')
 router.register('prescriptions', views.PrescriptionViewSet, basename='prescriptions')
 router.register('inventory-transactions', views.InventoryTransactionViewSet, basename='inventory-transactions')
+router.register('test-results', views.TestResultViewSet, basename='test-results')
+router.register('invoices', views.InvoiceViewSet, basename='invoices')
 router.register('medicine-categories', views.MedicineCategoryViewSet, basename='medicine-categories')
 router.register('medicines', views.MedicineViewSet, basename='medicines')
 
