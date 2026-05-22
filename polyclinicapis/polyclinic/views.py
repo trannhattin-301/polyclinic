@@ -1,8 +1,8 @@
-from rest_framework import viewsets, generics, permissions, status, parsers
+from rest_framework import viewsets, generics, permissions, status, parsers, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from polyclinic import serializers
-from polyclinic.models import User, Specialty, ServicesSpecialty, StaffProfile, PatientProfile, WorkSchedule, TimeSlot
+from polyclinic.models import User, Specialty, ServicesSpecialty, StaffProfile, PatientProfile, WorkSchedule, TimeSlot, Appointment
 from polyclinic import perms
 
 
@@ -33,37 +33,41 @@ class SpecialtyViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.SpecialtySerializer
 
 
-class ServicesSpecialtyViewSet(viewsets.ViewSet, generics.ListAPIView):
+class ServicesSpecialtyViewSet(viewsets.ModelViewSet):
     queryset = ServicesSpecialty.objects.filter(active=True)
     serializer_class = serializers.ServicesSpecialtySerializer
 
     def get_queryset(self):
-        query = self.queryset
+        queryset = ServicesSpecialty.objects.filter(active=True)
 
         specialty_id = self.request.query_params.get('specialty_id')
         if specialty_id:
-            query = query.filter(Specialty=specialty_id)
+            queryset = queryset.filter(specialties__id=specialty_id)
 
-        return query
+        return queryset
 
 
-class StaffProfileViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+class StaffProfileViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StaffProfile.objects.filter(active=True)
     serializer_class = serializers.StaffProfileSerializer
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        query = self.queryset
+        queryset = StaffProfile.objects.filter(active=True)
 
         specialty_id = self.request.query_params.get('specialty_id')
         if specialty_id:
-            query = query.filter(specialties=specialty_id)
+            queryset = queryset.filter(specialties__id=specialty_id)
 
-        return query
+        return queryset.distinct()
 
     @action(methods=['get'], url_path='schedules', detail=True)
-    def schedules(self, request, pk):
-        schedules = self.get_object().work_schedule.filter(active=True)
-        return Response(serializers.WorkScheduleSerializer(schedules, many=True).data, status=status.HTTP_200_OK)
+    def schedules(self, request, pk=None):
+        schedules = self.get_object().work_schedules.filter(active=True)
+        return Response(
+            serializers.WorkScheduleSerializer(schedules, many=True).data,
+            status=status.HTTP_200_OK
+        )
 
 
 class PatientProfileViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.UpdateAPIView):
@@ -75,37 +79,115 @@ class PatientProfileViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics
         return self.request.user.patient_profile
 
 
-class WorkScheduleViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+class WorkScheduleViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WorkScheduleSerializer
-    permission_classes = [perms.IsDoctor]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'time_slots']:
+            return [permissions.AllowAny()]
+        return [perms.IsDoctor()]
 
     def get_queryset(self):
-        return WorkSchedule.objects.filter(
-            staff_profile__user=self.request.user,
-            active=True
-        )
+        queryset = WorkSchedule.objects.filter(active=True)
+
+        staff_profile_id = self.request.query_params.get('staff_profile_id')
+        date = self.request.query_params.get('date')
+        specialty_id = self.request.query_params.get('specialty_id')
+
+        if staff_profile_id:
+            queryset = queryset.filter(staff_profile_id=staff_profile_id)
+
+        if date:
+            queryset = queryset.filter(date=date)
+
+        if specialty_id:
+            queryset = queryset.filter(staff_profile__specialties__id=specialty_id)
+
+        return queryset.distinct()
 
     def perform_create(self, serializer):
         serializer.save(staff_profile=self.request.user.staff_profile)
 
     @action(methods=['get'], url_path='time-slots', detail=True)
-    def time_slots(self, request, pk):
+    def time_slots(self, request, pk=None):
         slots = self.get_object().time_slots.filter(active=True)
-        return Response(serializers.TimeSlotSerializer(slots, many=True).data, status=status.HTTP_200_OK)
+        return Response(
+            serializers.TimeSlotSerializer(slots, many=True).data,
+            status=status.HTTP_200_OK
+        )
 
 
-class TimeSlotViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
+class TimeSlotViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TimeSlotSerializer
-    permission_classes = [perms.IsDoctor]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        if self.action == 'book':
+            return [perms.IsPatient()]
+        return [perms.IsDoctor()]
 
     def get_queryset(self):
-        return TimeSlot.objects.filter(active=True)
+        queryset = TimeSlot.objects.filter(active=True)
 
-    @action(methods=['post'], url_path='book', detail=True, permission_classes=[perms.IsPatient])
-    def book(self, request, pk):
+        work_schedule_id = self.request.query_params.get('work_schedule_id')
+        status_param = self.request.query_params.get('status')
+
+        if work_schedule_id:
+            queryset = queryset.filter(work_schedule_id=work_schedule_id)
+
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        return queryset
+
+    @action(methods=['post'], url_path='book', detail=True)
+    def book(self, request, pk=None):
         slot = self.get_object()
-        if slot.status.__eq__(TimeSlot.Status.BOOKED):
-            return Response({'detail': 'Slot đã được đặt.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if slot.status == TimeSlot.Status.BOOKED:
+            return Response(
+                {'detail': 'Slot đã được đặt.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         slot.status = TimeSlot.Status.BOOKED
         slot.save()
-        return Response(serializers.TimeSlotSerializer(slot).data, status=status.HTTP_200_OK)
+
+        return Response(
+            serializers.TimeSlotSerializer(slot).data,
+            status=status.HTTP_200_OK
+        )
+
+class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.RetrieveAPIView):
+    queryset = Appointment.objects.select_related('patient', 'time_slot', 'time_slot__work_schedule', 'time_slot__work_schedule__staff_profile', 'time_slot__work_schedule__staff_profile__user').prefetch_related('services').all()
+    serializer_class = serializers.AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id', 'created_date']
+    ordering = ['-created_date']
+
+    def get_queryset(self):
+        user, query = self.request.user, self.queryset
+
+        if user.is_staff or user.is_superuser:
+            return query
+
+        if hasattr(user, 'staff_profile'):
+            return query.filter(time_slot__work_schedule__staff_profile=user.staff_profile)
+
+        return query.filter(patient=user)
+
+    def perform_create(self, serializer):
+        serializer.save(patient=self.request.user)
+
+    @action(methods=['get'], url_path='my', detail=False)
+    def my_appointments(self, request):
+        return Response(serializers.AppointmentSerializer(self.get_queryset(), many=True).data, status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], url_path='cancel', detail=True)
+    def cancel(self, request, pk=None):
+        appointment = self.get_object()
+        appointment.status = Appointment.Status.CANCELLED
+        appointment.save()
+        return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)

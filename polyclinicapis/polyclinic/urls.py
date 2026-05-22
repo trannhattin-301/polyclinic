@@ -1,16 +1,18 @@
 from django.urls import path, include
-from . import views
 from rest_framework.routers import DefaultRouter
+from . import views
 
 router = DefaultRouter()
+
 router.register('users', views.UserViewSet, basename='user')
-router.register('specialties', views.SpecialtyViewSet,basename='specialty')
-router.register('services', views.ServicesSpecialtyViewSet, basename='service')
+router.register('specialties', views.SpecialtyViewSet, basename='specialty')
+router.register('services', views.ServicesSpecialtyViewSet, basename='services')
 router.register('staff', views.StaffProfileViewSet, basename='staff')
 router.register('patients', views.PatientProfileViewSet, basename='patient')
-router.register('work-schedules', views.WorkScheduleViewSet, basename='work-schedule')
-router.register('time-slots', views.TimeSlotViewSet, basename='time-slot')
+router.register('work-schedules', views.WorkScheduleViewSet, basename='work-schedules')
+router.register('time-slots', views.TimeSlotViewSet, basename='time-slots')
+router.register('appointments', views.AppointmentViewSet, basename='appointments')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
 ]

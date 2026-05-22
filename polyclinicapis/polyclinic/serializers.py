@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     User, Specialty, ServicesSpecialty,
     StaffProfile, StaffSpecialty,
-    PatientProfile, WorkSchedule, TimeSlot,
+    PatientProfile, WorkSchedule, TimeSlot,Appointment
 )
 
 # User
@@ -73,31 +73,38 @@ class SpecialtySerializer(serializers.ModelSerializer):
 
 # Services Specialty
 class ServicesSpecialtySerializer(serializers.ModelSerializer):
+    specialties = serializers.PrimaryKeyRelatedField(
+        queryset=Specialty.objects.filter(active=True),
+        many=True,
+        required=False
+    )
+
     class Meta:
         model = ServicesSpecialty
-        fields = ['id', 'name', 'description', 'price', 'active', 'Specialty']
-        extra_kwargs = {
-            'Specialty': {'required': False},
-        }
+        fields = ['id', 'name', 'description', 'price', 'active', 'specialties']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['Specialty'] = SpecialtySerializer(instance.Specialty, many=True).data
+        data['specialties'] = SpecialtySerializer(instance.specialties.all(), many=True).data
         return data
 
     def create(self, validated_data):
-        specialties = validated_data.pop('Specialty', [])
+        specialties = validated_data.pop('specialties', [])
         service = ServicesSpecialty.objects.create(**validated_data)
-        service.Specialty.set(specialties)
+        service.specialties.set(specialties)
         return service
 
     def update(self, instance, validated_data):
-        specialties = validated_data.pop('Specialty', None)
+        specialties = validated_data.pop('specialties', None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
+
         if specialties is not None:
-            instance.Specialty.set(specialties)
+            instance.specialties.set(specialties)
+
         return instance
 
 
@@ -178,19 +185,59 @@ class PatientProfileSerializer(serializers.ModelSerializer):
         return value
 
 
-# Work Schedule
-class WorkScheduleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkSchedule
-        fields = ['id', 'staff_profile', 'date', 'active']
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['staff_profile'] = SimpleUserSerializer(instance.staff_profile.user).data
-        return data
 
 # Time slot
 class TimeSlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeSlot
         fields = ['id', 'work_schedule', 'start_time', 'end_time', 'status', 'active']
+
+
+# Work Schedule
+class WorkScheduleSerializer(serializers.ModelSerializer):
+    time_slots = TimeSlotSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = WorkSchedule
+        fields = ['id', 'staff_profile', 'date', 'active', 'time_slots']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['staff_profile'] = {
+            'id': instance.staff_profile.id,
+            'user': SimpleUserSerializer(instance.staff_profile.user).data,
+            'degree': instance.staff_profile.degree,
+            'experience': instance.staff_profile.experience,
+            'fee': instance.staff_profile.fee,
+        }
+
+        data['time_slots'] = TimeSlotSerializer(
+            instance.time_slots.filter(active=True),
+            many=True
+        ).data
+
+        return data
+
+# Appointment
+class AppointmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = ['id', 'patient', 'disease_description', 'status', 'time_slot', 'services', 'created_date', 'updated_date']
+        extra_kwargs = {'patient': {'read_only': True}, 'status': {'read_only': True}, 'services': {'required': False}}
+
+    def create(self, validated_data):
+        services = validated_data.pop('services', [])
+        appointment = Appointment.objects.create(**validated_data)
+        appointment.services.set(services)
+        return appointment
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['patient_name'] = instance.patient.get_full_name() or instance.patient.username
+        data['doctor_id'] = instance.doctor.id
+        data['doctor_name'] = instance.doctor.user.get_full_name() or instance.doctor.user.username
+        data['time_slot_detail'] = {'id': instance.time_slot.id, 'start_time': instance.time_slot.start_time, 'end_time': instance.time_slot.end_time}
+        data['work_schedule'] = {'id': instance.time_slot.work_schedule.id, 'date': instance.time_slot.work_schedule.date}
+        data['services_detail'] = [{'id': service.id, 'name': service.name, 'price': service.price} for service in instance.services.all()]
+        return data
