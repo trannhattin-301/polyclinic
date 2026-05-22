@@ -3,7 +3,8 @@ from .models import (
     User, Specialty, ServicesSpecialty,
     StaffProfile, StaffSpecialty,
     PatientProfile, WorkSchedule, TimeSlot, Appointment,
-    MedicalRecord, MedicineCategory, Medicine
+    MedicalRecord, MedicineCategory, Medicine,
+    Prescription, PrescriptionItem, InventoryTransaction
 )
 
 # User
@@ -283,6 +284,117 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
 
         return data
 
+
+# Prescription
+class PrescriptionItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionItem
+        fields = [
+            'id', 'prescription', 'medicine', 'quantity', 'dosage',
+            'frequency', 'timing', 'duration_days', 'notes', 'active'
+        ]
+        extra_kwargs = {
+            'prescription': {'required': False, 'read_only': True},
+        }
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['medicine'] = {
+            'id': instance.medicine.id,
+            'name': instance.medicine.name,
+            'unit': instance.medicine.unit,
+            'price': instance.medicine.price,
+            'stock': instance.medicine.stock,
+        }
+        data['subtotal'] = instance.subtotal
+        return data
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    items = PrescriptionItemSerializer(many=True, required=False)
+
+    class Meta:
+        model = Prescription
+        fields = [
+            'id', 'medical_record', 'notes', 'status', 'dispensed_at',
+            'dispensed_by', 'active', 'created_date', 'updated_date', 'items'
+        ]
+        extra_kwargs = {
+            'status': {'read_only': True},
+            'dispensed_at': {'read_only': True},
+            'dispensed_by': {'read_only': True},
+        }
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
+        prescription = Prescription.objects.create(**validated_data)
+
+        for item_data in items_data:
+            PrescriptionItem.objects.create(prescription=prescription, **item_data)
+
+        return prescription
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if items_data is not None:
+            instance.items.all().delete()
+            for item_data in items_data:
+                PrescriptionItem.objects.create(prescription=instance, **item_data)
+
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        appointment = instance.medical_record.appointment
+
+        data['medical_record_detail'] = {
+            'id': instance.medical_record.id,
+            'appointment_id': appointment.id,
+            'diagnosis': instance.medical_record.diagnosis,
+        }
+        data['patient'] = {
+            'id': appointment.patient.id,
+            'name': appointment.patient.get_full_name() or appointment.patient.username,
+        }
+        data['doctor'] = {
+            'id': appointment.doctor.id,
+            'name': appointment.doctor.user.get_full_name() or appointment.doctor.user.username,
+        }
+        data['items'] = PrescriptionItemSerializer(instance.items.all(), many=True).data
+        data['total_price'] = instance.total_price
+        data['dispensed_by'] = (
+            SimpleUserSerializer(instance.dispensed_by).data
+            if instance.dispensed_by else None
+        )
+        return data
+
+
+class InventoryTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryTransaction
+        fields = [
+            'id', 'medicine', 'type', 'quantity', 'stock_before',
+            'stock_after', 'note', 'created_by', 'prescription',
+            'prescription_item', 'created_date'
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['medicine'] = {
+            'id': instance.medicine.id,
+            'name': instance.medicine.name,
+        }
+        data['created_by'] = (
+            SimpleUserSerializer(instance.created_by).data
+            if instance.created_by else None
+        )
+        return data
+
 # Medicine
 class MedicineCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -301,7 +413,7 @@ class MedicineSerializer(serializers.ModelSerializer):
         model = Medicine
         fields = [
             'id', 'category', 'name', 'ingredient', 'description',
-            'unit', 'price', 'stock', 'expiry_date', 'active'
+            'unit', 'price', 'stock', 'low_stock_threshold', 'expiry_date', 'active'
         ]
 
     def to_representation(self, instance):

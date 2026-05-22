@@ -176,6 +176,7 @@ class Medicine(BaseModel):
     unit = models.CharField(max_length=10, choices=Unit.choices, default=Unit.TABLET)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock = models.PositiveIntegerField(default=0, help_text="Số lượng tồn kho")
+    low_stock_threshold = models.PositiveIntegerField(default=100, help_text="Low stock alert threshold")
     expiry_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
@@ -185,7 +186,7 @@ class Medicine(BaseModel):
         return self.stock > 0
 
     def is_low_stock(self):
-        return self.stock <= 100
+        return self.stock <= self.low_stock_threshold
 
     def is_expired(self):
         from django.utils import timezone
@@ -199,8 +200,18 @@ class Medicine(BaseModel):
         return 0 <= delta.days <= 30
 
 class Prescription(BaseModel):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Đang tạo"
+        CONFIRMED = "confirmed", "Hoàn tất"
+        DISPENSED = "dispensed", "Đã phát"
+        CANCELLED = "cancelled", "Đã hủy"
+
     medical_record = models.OneToOneField(MedicalRecord, on_delete=models.CASCADE, related_name="prescription_medical_record")
     notes          = models.TextField(blank=True, null=True, help_text="Lưu ý chung của đơn thuốc")
+
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    dispensed_at = models.DateTimeField(null=True, blank=True)
+    dispensed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="dispensed_prescriptions")
 
     def __str__(self):
         return f"Đơn thuốc: {self.medical_record.appointment.patient.get_full_name()}"
@@ -242,6 +253,30 @@ class PrescriptionItem(BaseModel):
     @property
     def subtotal(self):
         return self.medicine.price * self.quantity
+
+class InventoryTransaction(BaseModel):
+    class Type(models.TextChoices):
+        IMPORT = "import", "Nhập kho"
+        EXPORT = "export", "Xuất kho"
+        ADJUST = "adjust", "Điều chỉnh"
+        DISPENSE = "dispense", "Cấp phát theo đơn"
+
+    medicine = models.ForeignKey(Medicine, on_delete=models.PROTECT, related_name="inventory_transactions")
+    type = models.CharField(max_length=20, choices=Type.choices)
+    quantity = models.PositiveIntegerField()
+    stock_before = models.PositiveIntegerField()
+    stock_after = models.PositiveIntegerField()
+    note = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="inventory_transactions_created")
+    prescription = models.ForeignKey(Prescription, on_delete=models.PROTECT, null=True, blank=True, related_name="inventory_transactions")
+    prescription_item = models.ForeignKey(PrescriptionItem, on_delete=models.PROTECT, null=True, blank=True, related_name="inventory_transactions")
+
+    class Meta:
+        ordering = ["-created_date"]
+
+    def __str__(self):
+        return f"{self.medicine.name} | {self.type} | {self.quantity}"
+
 
 class TestResult(BaseModel):
     medical_record = models.ForeignKey(MedicalRecord, on_delete=models.PROTECT, related_name="test_results")
