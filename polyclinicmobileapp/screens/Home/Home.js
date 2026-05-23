@@ -106,7 +106,9 @@ const Home = ({ navigation }) => {
                         const newIndex = routes.findIndex(r => r.key === route.key);
                         setIndex(newIndex);
 
-                        if (route.key === 'account') navigation.navigate('Profile');
+                        if (route.key === 'home') navigation.navigate('Home');
+                        if (route.key === 'schedule') navigation.navigate('MyAppointment');
+                        if (route.key === 'profile' || route.key === 'account') navigation.navigate('Profile');
                     }}
                 />
             </View>

@@ -20,6 +20,7 @@ export default StyleSheet.create({
   },
   button: {
     marginTop: 12,
+    marginBottom: 8,
   },
   linkRow: {
     alignItems: 'center',
@@ -60,7 +61,22 @@ export default StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
   },
-  button: {
-    marginBottom: 8,
+
+  // Profile.js
+  profileContainer: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  avatarWrapper: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarButton: {
+    marginTop: 12,
+  },
+  profileInput: {
+    marginBottom: 10,
   },
 });
