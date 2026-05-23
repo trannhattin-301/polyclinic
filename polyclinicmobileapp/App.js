@@ -12,6 +12,7 @@ import ProfileScreen from './screens/User/Profile';
 import SelectSpecialty from './Appointment/SelectSpecialty';
 import SelectDoctor from './Appointment/SelectDoctor';
 import SelectSchedule from './Appointment/SelectSchedule';
+import MyAppointment from './Appointment/MyAppointments';
 
 import { MyUserContext, MyDispatchContext } from './configs/Contexts';
 import { MyUserReducer } from './reducers/reducers';
@@ -31,7 +32,7 @@ export default function App() {
           <NavigationContainer>
             <StatusBar style="auto" />
 
-            <Stack.Navigator initialRouteName="Register">
+            <Stack.Navigator initialRouteName="Login">
               <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
@@ -40,6 +41,7 @@ export default function App() {
               <Stack.Screen name="SelectSpecialty" component={SelectSpecialty} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
               <Stack.Screen name="SelectDoctor" component={SelectDoctor} options={{ headerShown: true, title: 'Chọn bác sĩ' }} />
               <Stack.Screen name="SelectSchedule" component={SelectSchedule} options={{ headerShown: true, title: 'Chọn ngày khám' }} />
+              <Stack.Screen name="MyAppointment" component={MyAppointment} options={{ headerShown: true, title: 'Lịch hẹn của tôi' }} />
             </Stack.Navigator>
           </NavigationContainer>
         </MyDispatchContext.Provider>
