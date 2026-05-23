@@ -4,7 +4,7 @@ from datetime import date, time, timedelta
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'polyclinicapis.settings')
 django.setup()
 
-from polyclinic.models import User, Specialty, StaffProfile, StaffSpecialty, ServicesSpecialty, WorkSchedule, TimeSlot
+from polyclinic.models import User, Specialty, StaffProfile, StaffSpecialty, ServicesSpecialty, WorkSchedule, TimeSlot, MedicineCategory, Medicine
 
 # seed data cho bảng Chuyên khoa
 specialties = [
@@ -67,9 +67,139 @@ for item in data:
     service, created = ServicesSpecialty.objects.get_or_create(name=item["name"], defaults={"description": item["description"], "price": item["price"], "active": True})
     service.specialties.set(Specialty.objects.filter(name__in=item["specialties"]))
 
+# seed data cho bang Danh muc thuoc
+medicine_categories = [
+    ("Giam dau - Ha sot", "Thuoc giam dau, ha sot thong dung"),
+    ("Khang sinh", "Thuoc dieu tri nhiem khuan"),
+    ("Tieu hoa", "Thuoc ho tro tieu hoa, da day, ruot"),
+    ("Ho hap", "Thuoc dieu tri ho, cam, viem duong ho hap"),
+    ("Da lieu", "Thuoc boi, thuoc uong dieu tri benh da lieu"),
+    ("Vitamin - Khoang chat", "Vitamin va khoang chat bo sung"),
+]
+
+for name, description in medicine_categories:
+    MedicineCategory.objects.get_or_create(
+        name=name,
+        defaults={"description": description}
+    )
+
+# seed data cho bang Thuoc
+medicines = [
+    {
+        "category": "Giam dau - Ha sot",
+        "name": "Paracetamol 500mg",
+        "ingredient": "Paracetamol",
+        "description": "Giam dau, ha sot cho cac trieu chung thong thuong",
+        "unit": Medicine.Unit.TABLET,
+        "price": 1500,
+        "stock": 2000,
+        "low_stock_threshold": 200,
+        "expiry_date": date.today() + timedelta(days=540),
+    },
+    {
+        "category": "Khang sinh",
+        "name": "Amoxicillin 500mg",
+        "ingredient": "Amoxicillin",
+        "description": "Khang sinh penicillin pho bien dieu tri nhiem khuan ho hap, tai mui hong",
+        "unit": Medicine.Unit.CAPSULE,
+        "price": 2500,
+        "stock": 1500,
+        "low_stock_threshold": 150,
+        "expiry_date": date.today() + timedelta(days=450),
+    },
+    {
+        "category": "Tieu hoa",
+        "name": "Smecta",
+        "ingredient": "Diosmectite",
+        "description": "Ho tro dieu tri tieu chay cap va roi loan tieu hoa",
+        "unit": Medicine.Unit.PACK,
+        "price": 3500,
+        "stock": 800,
+        "low_stock_threshold": 100,
+        "expiry_date": date.today() + timedelta(days=365),
+    },
+    {
+        "category": "Tieu hoa",
+        "name": "Omeprazole 20mg",
+        "ingredient": "Omeprazole",
+        "description": "Giam tiet acid da day, ho tro dieu tri viem loet da day",
+        "unit": Medicine.Unit.CAPSULE,
+        "price": 3000,
+        "stock": 1200,
+        "low_stock_threshold": 120,
+        "expiry_date": date.today() + timedelta(days=480),
+    },
+    {
+        "category": "Ho hap",
+        "name": "Acetylcysteine 200mg",
+        "ingredient": "Acetylcysteine",
+        "description": "Long dom, ho tro dieu tri ho co dom",
+        "unit": Medicine.Unit.PACK,
+        "price": 2800,
+        "stock": 900,
+        "low_stock_threshold": 100,
+        "expiry_date": date.today() + timedelta(days=400),
+    },
+    {
+        "category": "Ho hap",
+        "name": "Cetirizine 10mg",
+        "ingredient": "Cetirizine dihydrochloride",
+        "description": "Giam trieu chung di ung, so mui, viem mui di ung",
+        "unit": Medicine.Unit.TABLET,
+        "price": 1800,
+        "stock": 1400,
+        "low_stock_threshold": 150,
+        "expiry_date": date.today() + timedelta(days=500),
+    },
+    {
+        "category": "Da lieu",
+        "name": "Clotrimazole Cream",
+        "ingredient": "Clotrimazole",
+        "description": "Thuoc boi da khang nam",
+        "unit": Medicine.Unit.TUBE,
+        "price": 22000,
+        "stock": 300,
+        "low_stock_threshold": 40,
+        "expiry_date": date.today() + timedelta(days=360),
+    },
+    {
+        "category": "Vitamin - Khoang chat",
+        "name": "Vitamin C 500mg",
+        "ingredient": "Ascorbic acid",
+        "description": "Bo sung vitamin C, ho tro de khang",
+        "unit": Medicine.Unit.TABLET,
+        "price": 1200,
+        "stock": 2500,
+        "low_stock_threshold": 250,
+        "expiry_date": date.today() + timedelta(days=600),
+    },
+]
+
+for item in medicines:
+    category = MedicineCategory.objects.filter(name=item["category"]).first()
+    if category:
+        Medicine.objects.get_or_create(
+            name=item["name"],
+            defaults={
+                "category": category,
+                "ingredient": item["ingredient"],
+                "description": item["description"],
+                "unit": item["unit"],
+                "price": item["price"],
+                "stock": item["stock"],
+                "low_stock_threshold": item["low_stock_threshold"],
+                "expiry_date": item["expiry_date"],
+                "active": True,
+            }
+        )
+    else:
+        print(f"Khong tim thay danh muc thuoc: {item['category']}")
+
 # Seed data cho schedule,
 # WorkSchedule: 5 bac si x 7 ngay = 35
 # TimeSlot: 5 bac si x 7 ngay x 11 khung gio = 385 dong
+today = date.today()
+
 TIME_SLOTS = [
     (time(7, 30), time(8, 0)),
     (time(8, 0), time(8, 30)),
@@ -84,9 +214,6 @@ TIME_SLOTS = [
     (time(15, 0), time(15, 30)),
     (time(15, 30), time(16, 0)),
 ]
-
-today = date.today()
-
 for staff in StaffProfile.objects.filter(active=True):
     for i in range(7):
         work_schedule, created = WorkSchedule.objects.get_or_create(staff_profile=staff, date=today + timedelta(days=i), defaults={"active": True})
