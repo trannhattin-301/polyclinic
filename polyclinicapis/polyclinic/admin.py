@@ -1,5 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+
+from polyclinic.models import MedicineCategory, Medicine
+
 # from .models import User, Doctor, Nurse, Patient, Specialty
 #
 # class CustomUserAdmin(UserAdmin):
@@ -27,3 +30,6 @@ from django.contrib.auth.admin import UserAdmin
 # admin.site.register(Nurse)
 # admin.site.register(Patient)
 # admin.site.register(Specialty)
+
+admin.site.register(MedicineCategory)
+admin.site.register(Medicine)
