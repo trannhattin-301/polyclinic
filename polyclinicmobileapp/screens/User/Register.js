@@ -7,9 +7,10 @@ import styles from './Styles';
 import Apis, { endpoints } from '../../configs/Apis';
 
 const userInfo = [
+  { field: 'username', label: 'Tên đăng nhập', icon: 'account' },
+  { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
   { field: 'firstName', label: 'Họ', icon: 'account' },
   { field: 'lastName', label: 'Tên', icon: 'account' },
-  { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
   { field: 'phone', label: 'Số điện thoại', icon: 'phone', keyboardType: 'phone-pad' },
   { field: 'password', label: 'Mật khẩu', icon: 'lock', secureTextEntry: true },
   { field: 'confirmPassword', label: 'Xác nhận mật khẩu', icon: 'lock-check', secureTextEntry: true },
@@ -45,7 +46,7 @@ const Register = () => {
     try {
       const form = new FormData();
 
-      form.append('username', user.email);
+      form.append('username', user.username);
       form.append('password', user.password);
       form.append('first_name', user.firstName);
       form.append('last_name', user.lastName);

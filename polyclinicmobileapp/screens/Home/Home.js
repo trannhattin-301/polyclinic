@@ -58,7 +58,8 @@ const Home = ({ navigation }) => {
 
     const menuItems = [
         { key: 'appointment', label: 'Đặt lịch khám', icon: 'calendar' },
-        { key: 'medicine', label: 'Đơn thuốc', icon: 'medkit' },
+        { key: 'prescription', label: 'Đơn thuốc', icon: 'medkit' },
+        { key: 'manageMedicine', label: 'Quản lý thuốc', icon: 'pill' },
         { key: 'record', label: 'Hồ sơ bệnh án', icon: 'book' },
         { key: 'consult', label: 'Tư vấn online', icon: 'phone' },
     ];
@@ -90,6 +91,12 @@ const Home = ({ navigation }) => {
                             onPress={() => {
                                 if (item.key === 'appointment') {
                                     navigation.navigate('SelectSpecialty');
+                                }
+                                if (item.key === 'prescription') {
+                                    navigation.navigate('MyAppointment');
+                                }
+                                if (item.key === 'manageMedicine') {
+                                    navigation.navigate('MedicineManagement');
                                 }
                             }}
                         >

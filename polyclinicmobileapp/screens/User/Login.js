@@ -9,7 +9,7 @@ import Apis, { endpoints, authApis } from '../../configs/Apis';
 import { MyDispatchContext } from '../../configs/Contexts';
 
 const userInfo = [
-  { field: 'email', label: 'Email', icon: 'email', keyboardType: 'email-address' },
+  { field: 'username', label: 'Tên đăng nhập', icon: 'account' },
   { field: 'password', label: 'Mật khẩu', icon: 'lock', secureTextEntry: true },
 ];
 
@@ -39,17 +39,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const form = new FormData();
-
-      form.append('username', user.email);
-      form.append('password', user.password);
-      form.append('grant_type', 'password');
-      form.append('client_id', 'RXJhLWnOXCC2gMicKliU0YuDDba6XmJ9a5niIj1y');
-      form.append('client_secret', 'WxhpLQsvaaNNqHe5KtOfXyuLb2V6CujEkHGhYZvVBfV6snw46XhgHTsxvgoAIxSFAsmqaDUHmjizPM1HJugwwwWbZNp0nHoPXrtcg02B5OgHTFowycsq80doqZsSdW58');
+      const form = `username=${encodeURIComponent(user.username)}&password=${encodeURIComponent(user.password)}&grant_type=password&client_id=${encodeURIComponent('R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl')}&client_secret=${encodeURIComponent('M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT')}`;
 
       const res = await Apis.post(endpoints.login, form, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
