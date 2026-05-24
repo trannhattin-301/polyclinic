@@ -8,6 +8,9 @@ import styles from './Styles';
 import Apis, { endpoints, authApis } from '../../configs/Apis';
 import { MyDispatchContext } from '../../configs/Contexts';
 
+const CLIENT_ID = 'q0HDNWb5oJl8A43PWAdeROTsKb2UXf6L7gmliQ7O'.trim();
+const CLIENT_SECRET = 'pB2Mbo0DUM81Vjs2k4HP9WNX621UCtx8Jbp2v8yH2kDwG62Ua0U6U5kjoqDGOUvdwxXOX6tvzFhYJ6jnHbDhBBCo0HBjcJ6cXHirz50PiQjArWAeam34HwoUIZ6haEUM'.trim();
+
 const userInfo = [
   { field: 'username', label: 'Tên đăng nhập', icon: 'account' },
   { field: 'password', label: 'Mật khẩu', icon: 'lock', secureTextEntry: true },
@@ -39,36 +42,33 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const form = `username=${encodeURIComponent(user.username)}&password=${encodeURIComponent(user.password)}&grant_type=password&client_id=${encodeURIComponent('R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl')}&client_secret=${encodeURIComponent('M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT')}`;
+      const form = new URLSearchParams();
+      form.append('username', user.username);
+      form.append('password', user.password);
+      form.append('grant_type', 'password');
+      form.append('client_id', CLIENT_ID);
+      form.append('client_secret', CLIENT_SECRET);
 
-      const res = await Apis.post(endpoints.login, form, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+      const res = await Apis.post(endpoints.login, form.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
       const token = res.data.access_token;
-
       await AsyncStorage.setItem('access_token', token);
 
       const currentUser = await authApis(token).get(endpoints['current-user']);
+      dispatch({ type: 'LOGIN', payload: currentUser.data });
 
-      dispatch({
-        type: 'LOGIN',
-        payload: currentUser.data,
-      });
+      console.log('Current user:', currentUser.data);
 
-      navigation.navigate('Home');
+      if (currentUser.data.role === 'staff') navigation.navigate('DoctorHome');
+      else navigation.navigate('Home');
     } catch (ex) {
       console.log('Lỗi đăng nhập:', ex.response?.data || ex.message);
 
-      if (ex.response?.data?.error_description) {
-        setErr(ex.response.data.error_description);
-      } else if (ex.response?.data) {
-        setErr(JSON.stringify(ex.response.data));
-      } else {
-        setErr('Không thể kết nối đến server!');
-      }
+      if (ex.response?.data?.error_description) setErr(ex.response.data.error_description);
+      else if (ex.response?.data) setErr(JSON.stringify(ex.response.data));
+      else setErr('Không thể kết nối đến server!');
     } finally {
       setLoading(false);
     }
@@ -78,9 +78,7 @@ const Login = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Đăng nhập</Text>
 
-      <HelperText type="error" visible={!!err}>
-        {err}
-      </HelperText>
+      <HelperText type="error" visible={!!err}>{err}</HelperText>
 
       {userInfo.map(i => (
         <TextInput
@@ -97,13 +95,7 @@ const Login = () => {
         />
       ))}
 
-      <Button
-        loading={loading}
-        disabled={loading}
-        onPress={handleLogin}
-        mode="contained"
-        style={styles.button}
-      >
+      <Button loading={loading} disabled={loading} onPress={handleLogin} mode="contained" style={styles.button}>
         Đăng nhập
       </Button>
 

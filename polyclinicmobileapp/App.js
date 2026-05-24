@@ -16,6 +16,13 @@ import MyAppointment from './Appointment/MyAppointments';
 import MedicineManagementScreen from './screens/Medicine/MedicineManagement';
 import InventoryTransactions from './screens/Medicine/InventoryTransactions';
 
+import DoctorHome from './screens/Doctor/DoctorHome';
+import DoctorAppointments from './screens/Doctor/DoctorAppointments';
+import DoctorAppointmentDetail from './screens/Doctor/DoctorAppointmentDetail';
+import DoctorMedicineManagement from './screens/Doctor/DoctorMedicineManagement';
+import DoctorPrescriptionCreate from './screens/Doctor/DoctorPrescriptionCreate';
+import DoctorScheduleManagement from './screens/Doctor/DoctorScheduleManagement';
+
 import { MyUserContext, MyDispatchContext } from './configs/Contexts';
 import { MyUserReducer } from './reducers/reducers';
 
@@ -46,6 +53,14 @@ export default function App() {
               <Stack.Screen name="MyAppointment" component={MyAppointment} options={{ headerShown: true, title: 'Lịch hẹn của tôi' }} />
               <Stack.Screen name="MedicineManagement" component={MedicineManagementScreen} options={{ headerShown: true, title: 'Quản lý thuốc' }} />
               <Stack.Screen name="InventoryTransactions" component={InventoryTransactions} options={{ headerShown: true, title: 'Tồn kho thuốc' }} />
+
+              <Stack.Screen name="DoctorHome" component={DoctorHome} options={{ title: 'Trang bác sĩ' }} />
+              <Stack.Screen name="DoctorAppointments" component={DoctorAppointments} options={{ title: 'Lịch hẹn bác sĩ' }} />
+              <Stack.Screen name="DoctorAppointmentDetail" component={DoctorAppointmentDetail} options={{ title: 'Chi tiết lịch hẹn' }} />
+              <Stack.Screen name="DoctorMedicineManagement" component={DoctorMedicineManagement} options={{ title: 'Quản lý thuốc' }} />
+              <Stack.Screen name="DoctorPrescriptionCreate" component={DoctorPrescriptionCreate} options={{ title: 'Kê đơn thuốc' }} />
+              <Stack.Screen name="DoctorScheduleManagement" component={DoctorScheduleManagement} options={{ title: 'Lịch làm việc' }} />
+
             </Stack.Navigator>
           </NavigationContainer>
         </MyDispatchContext.Provider>
