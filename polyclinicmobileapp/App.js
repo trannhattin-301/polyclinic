@@ -13,6 +13,8 @@ import SelectSpecialty from './Appointment/SelectSpecialty';
 import SelectDoctor from './Appointment/SelectDoctor';
 import SelectSchedule from './Appointment/SelectSchedule';
 import MyAppointment from './Appointment/MyAppointments';
+import Chat from './Appointment/Chat';
+
 import MedicineManagementScreen from './screens/Medicine/MedicineManagement';
 import InventoryTransactions from './screens/Medicine/InventoryTransactions';
 
@@ -51,6 +53,7 @@ export default function App() {
               <Stack.Screen name="SelectDoctor" component={SelectDoctor} options={{ headerShown: true, title: 'Chọn bác sĩ' }} />
               <Stack.Screen name="SelectSchedule" component={SelectSchedule} options={{ headerShown: true, title: 'Chọn ngày khám' }} />
               <Stack.Screen name="MyAppointment" component={MyAppointment} options={{ headerShown: true, title: 'Lịch hẹn của tôi' }} />
+              <Stack.Screen name="Chat" component={Chat} options={{ headerShown: true, title: 'Chat với bác sĩ' }} />
               <Stack.Screen name="MedicineManagement" component={MedicineManagementScreen} options={{ headerShown: true, title: 'Quản lý thuốc' }} />
               <Stack.Screen name="InventoryTransactions" component={InventoryTransactions} options={{ headerShown: true, title: 'Tồn kho thuốc' }} />
 

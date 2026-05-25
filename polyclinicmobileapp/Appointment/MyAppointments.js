@@ -62,15 +62,19 @@ const MyAppointment = ({ navigation }) => {
             <Text>Giờ: {start} - {end}</Text>
             {item.disease_description ? <Text>Mô tả: {item.disease_description}</Text> : <Text>Mô tả: --</Text>}
             {item.services_detail?.length > 0 && <Text>Dịch vụ: {item.services_detail.map(s => s.name).join(', ')}</Text>}
+            <Button mode="contained-tonal" style={{ marginTop: 6 }} onPress={() => navigation.navigate('Chat', { appointment: item })}>
+                Chat với bác sĩ
+            </Button>
+
             {!cancelled && <Button mode="outlined" style={{ marginTop: 6 }} onPress={() => {
                 setSelected(item);
-                setVisible(true)
+                setVisible(true);
             }}>Hủy</Button>}
         </Card.Content></Card>);
     };
 
     return (
-        <View style={{ flex: 1, padding: 16, backgroundColor: '#f5f5f5' }}>
+        <View style={{ flex: 1, padding: 16, backgroundColor: 'skyBlue' }}>
             <Text variant="titleLarge" style={{ marginBottom: 12 }}>Lịch hẹn của tôi</Text>
             {loading && !refreshing ? <ActivityIndicator size="large" style={{ marginTop: 20 }} /> :
                 <FlatList data={appointments} keyExtractor={i => i.id.toString()} renderItem={renderItem}

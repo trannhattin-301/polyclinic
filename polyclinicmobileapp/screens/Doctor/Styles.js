@@ -28,7 +28,7 @@ export default StyleSheet.create({
   cardText: {
     fontSize: 14,
     marginBottom: 4,
-    color: '#333',
+    color: 'blue',
   },
 
   button: {

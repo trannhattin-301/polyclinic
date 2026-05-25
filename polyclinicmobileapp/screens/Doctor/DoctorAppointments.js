@@ -72,10 +72,16 @@ const DoctorAppointments = ({ navigation }) => {
           <Text style={styles.cardText}>Ngày khám: {date}</Text>
           <Text style={styles.cardText}>Giờ khám: {start} - {end}</Text>
           <Text style={styles.cardText}>Mô tả: {item.disease_description || '--'}</Text>
+          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+            <Button mode="contained" style={{ flex: 1, marginRight: 6 }} onPress={() => navigation.navigate('DoctorAppointmentDetail', { appointment: item })}>
+              Xem chi tiết
+            </Button>
 
-          <Button mode="outlined" style={styles.button} onPress={() => navigation.navigate('DoctorAppointmentDetail', { appointment: item })}>
-            Xem chi tiết
-          </Button>
+            <Button mode="contained-tonal" style={{ flex: 1, marginLeft: 6 }} onPress={() => navigation.navigate('Chat', { appointment: item })}>
+              Chat
+            </Button>
+          </View>
+    
         </Card.Content>
       </Card>
     );

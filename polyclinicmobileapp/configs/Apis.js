@@ -17,6 +17,7 @@ export const endpoints = {
   'medicine-categories': '/medicine-categories/',
   'medicines': '/medicines/',
   'inventory-transactions': '/inventory-transactions/',
+  'appointment-messages': (appointmentId) => `/appointments/${appointmentId}/messages/`,
 };
 
 export const authApis = (token) => {
