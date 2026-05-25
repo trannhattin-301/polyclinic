@@ -90,6 +90,19 @@ class PatientProfileViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics
     def get_object(self):
         return self.request.user.patient_profile
 
+    @action(methods=['get', 'patch'], detail=False, url_path='current-profile')
+    def current_profile(self, request):
+        patient_profile = self.get_object()
+
+        if request.method == 'GET':
+            serializer = self.get_serializer(patient_profile)
+            return Response(serializer.data)
+
+        serializer = self.get_serializer(patient_profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
 
 class WorkScheduleViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WorkScheduleSerializer
