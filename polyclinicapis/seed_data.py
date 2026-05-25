@@ -28,7 +28,7 @@ staffs = [
 ]
 
 for username, email, first_name, last_name, phone, degree, experience, fee in staffs:
-    user, created = User.objects.get_or_create(username=username, defaults={"email": email, "first_name": first_name, "last_name": last_name, "phone": phone, "role": "staff"})
+    user, created = User.objects.get_or_create(username=username, defaults={"email": email, "first_name": first_name, "last_name": last_name, "phone": phone, "role": User.Role.DOCTOR})
     user.set_password("123456")     # dù user mới tạo hay đã tồn tại, đều set password lại.
     user.save()
     StaffProfile.objects.get_or_create(user=user, defaults={"degree": degree, "experience": experience, "fee": fee})
@@ -223,3 +223,5 @@ for staff in StaffProfile.objects.filter(active=True):
 
 
 print("Da chen du lieu mau thanh cong!")
+client_id:R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl
+client_secret:M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT

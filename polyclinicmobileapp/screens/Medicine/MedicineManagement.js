@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import { Text, Card, TextInput, Button, Menu } from 'react-native-paper';
+import { Text, Card, TextInput, Button, Menu, Chip } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApis, endpoints } from '../../configs/Apis';
+import { MyUserContext } from '../../configs/Contexts';
 import styles from './Styles';
 
 const MedicineManagement = ({ navigation }) => {
+  const user = useContext(MyUserContext);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -13,6 +15,13 @@ const MedicineManagement = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+
+  // Check permission - only doctor and nurse can access
+  useEffect(() => {
+    if (user && user.role !== 'doctor' && user.role !== 'nurse') {
+      navigation.navigate('Home');
+    }
+  }, [user]);
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
@@ -62,17 +71,44 @@ const MedicineManagement = ({ navigation }) => {
     return matchSearch && matchCategory;
   });
 
-  const renderMedicine = ({ item }) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        <Text variant="titleMedium">{item.name || 'Tên thuốc'}</Text>
-        <Text>Nhóm: {item.category?.name || 'Chưa xác định'}</Text>
-        <Text>Giá: {item.price ?? '--'}</Text>
-        <Text>Số lượng: {item.quantity ?? '--'}</Text>
-        <Text>Mô tả: {item.description || 'Không có'}</Text>
-      </Card.Content>
-    </Card>
-  );
+  const renderMedicine = ({ item }) => {
+    const isLowStock = item.is_low_stock;
+    const isExpired = item.is_expired;
+    const isNearExpiry = item.is_near_expiry;
+
+    return (
+      <Card style={[styles.card, isLowStock ? styles.lowStockCard : styles.normalStockCard]}>
+        <Card.Content>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1 }}>
+              <Text variant="titleMedium">{item.name || 'Tên thuốc'}</Text>
+              <Text>Nhóm: {item.category?.name || 'Chưa xác định'}</Text>
+              <Text>Giá: {item.price ?? '--'}</Text>
+            </View>
+            {isLowStock && (
+              <View style={styles.lowStockBadge}>
+                <Text style={styles.lowStockText}>⚠ Cảnh báo</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={{ marginTop: 8 }}>Số lượng: {item.stock ?? '--'} {item.unit ? `(${item.unit})` : ''}</Text>
+          {isLowStock && (
+            <Text style={{ color: '#ff6b6b', marginTop: 4, fontSize: 12 }}>
+              ⚠ Dưới ngưỡng cảnh báo ({item.low_stock_threshold})
+            </Text>
+          )}
+          {isExpired && (
+            <Text style={{ color: '#d32f2f', marginTop: 4, fontSize: 12 }}>❌ Đã hết hạn</Text>
+          )}
+          {isNearExpiry && !isExpired && (
+            <Text style={{ color: '#ffa726', marginTop: 4, fontSize: 12 }}>⏰ Sắp hết hạn</Text>
+          )}
+          <Text style={{ marginTop: 8 }}>Mô tả: {item.description || 'Không có'}</Text>
+        </Card.Content>
+      </Card>
+    );
+  };
 
   return (
     <View style={styles.container}>

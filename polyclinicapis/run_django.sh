@@ -9,5 +9,5 @@ python manage.py createsuperuser --no-input || echo "SuperUser đã tồn tại!
 echo "=== Chen du lieu mau ==="
 python seed_data.py
 
-Client_id:R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl
-client_secret:M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT
+Client_id:42kqtXSm0XIZHk5Qy7drK5kfQ0BnHo6vpjK8G0xq
+client_secret:5hTrEobTbiCFQsIjaFi8a0AGBG1GEfwheKpfltusGedzogbIdgo59k5TH7RJ9XOHLZRcYg1RvJwZQ7dgnXBEVIqvzWkc5uXRe8KJq9Ui9A3FDHyD50QaStng1KfLShDG

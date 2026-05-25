@@ -43,4 +43,25 @@ export default StyleSheet.create({
   button: {
     marginTop: 10,
   },
+  lowStockBadge: {
+    backgroundColor: '#ff6b6b',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  lowStockText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  lowStockCard: {
+    borderColor: '#ff6b6b',
+    borderWidth: 1.5,
+  },
+  normalStockCard: {
+    borderColor: '#ddd',
+    borderWidth: 1,
+  },
 });

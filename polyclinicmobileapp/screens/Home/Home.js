@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, FlatList } from 'react-native';
 import { BottomNavigation, Searchbar, Card, Icon } from 'react-native-paper';
 import styles from './Styles';
 import { FontAwesome } from '@expo/vector-icons';
+
+import { MyUserContext } from '../../configs/Contexts';
 
 const HomeRoute = () => <Text>Trang chủ</Text>;
 const ScheduleRoute = () => <Text>Lịch hẹn</Text>;
@@ -11,6 +13,7 @@ const NotificationsRoute = () => <Text>Thông báo</Text>;
 const AccountRoute = () => <Text>Tài khoản</Text>;
 
 const Home = ({ navigation }) => {
+    const user = useContext(MyUserContext);
     const [index, setIndex] = useState(0);
     const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -59,15 +62,24 @@ const Home = ({ navigation }) => {
     const menuItems = [
         { key: 'appointment', label: 'Đặt lịch khám', icon: 'calendar' },
         { key: 'prescription', label: 'Đơn thuốc', icon: 'medkit' },
-        { key: 'manageMedicine', label: 'Quản lý thuốc', icon: 'pill' },
         { key: 'record', label: 'Hồ sơ bệnh án', icon: 'book' },
         { key: 'consult', label: 'Tư vấn online', icon: 'phone' },
     ];
 
+    if (user && (user.role === 'doctor' || user.role === 'nurse')) {
+        menuItems.splice(2, 0, { key: 'manageMedicine', label: 'Quản lý thuốc', icon: 'pill' });
+    }
+    const displayName = user
+        ? ( (user.first_name || user.last_name)
+            ? `${user.first_name || ''}${user.last_name ? ' ' + user.last_name : ''}`
+            : (user.username || user.name || '')
+          )
+        : '';
+
     return (
         <View style={{ flex: 1 }}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Xin chào, [Tên người dùng]</Text>
+                <Text style={styles.headerTitle}>Xin chào, {displayName}</Text>
                 <Searchbar
                     placeholder="Search"
                     onChangeText={setSearchQuery}

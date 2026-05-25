@@ -1,15 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Text } from 'react-native-paper';
-import styles from './Styles';
+import MedicineManagement from '../Medicine/MedicineManagement';
 
-const DoctorMedicineManagement = () => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Quản lý thuốc</Text>
-      <Text>Chức năng chưa làm, Tín làm đi</Text>
-    </View>
-  );
+const DoctorMedicineManagement = (props) => {
+  return <MedicineManagement {...props} />;
 };
 
 export default DoctorMedicineManagement;
