@@ -1,21 +1,31 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
-import { BottomNavigation, Card, Avatar, List, Button, Divider, TextInput } from 'react-native-paper';
+import { Alert, ScrollView, View } from 'react-native';
+import { BottomNavigation, Button, Card, Divider, List, TextInput } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
 
 import styles from './Styles';
 import { MyUserContext, MyDispatchContext } from '../../configs/Contexts';
 import { endpoints, authApis } from '../../configs/Apis';
 
+const HomeRoute = () => <Text>Trang chủ</Text>;
+const ScheduleRoute = () => <Text>Lịch hẹn</Text>;
+const ProfileRoute = () => <Text>Hồ sơ</Text>;
+const NotificationsRoute = () => <Text>Thông báo</Text>;
+const AccountRoute = () => <Text>Tài khoản</Text>;
+
 const Profile = ({ navigation }) => {
   const user = useContext(MyUserContext);
   const dispatch = useContext(MyDispatchContext);
 
-  const [index, setIndex] = useState(4);
+  const [index, setIndex] = useState(2);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', role: '', avatar: null });
+  const [patientProfile, setPatientProfile] = useState(null);
+
+  const [form, setForm] = useState({
+    first_name: '', last_name: '', dob: '', gender: '', blood_group: '',
+    insurance_number: '', insurance_expiry_date: '', height: '', weight: '', allergy_history: '',
+  });
 
   const [routes] = useState([
     { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
@@ -25,81 +35,88 @@ const Profile = ({ navigation }) => {
     { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
   ]);
 
-  useEffect(() => {
-    setForm({
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      role: user?.role || '',
-      avatar: null,
+    const renderScene = BottomNavigation.SceneMap({
+        home: HomeRoute,
+        schedule: ScheduleRoute,
+        profile: ProfileRoute,
+        notifications: NotificationsRoute,
+        account: AccountRoute,
     });
-  }, [user]);
 
-  const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || 'Người dùng';
-  const avatarLabel = fullName.split(' ').filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase();
-
-  const getRoleLabel = role => {
-    if (role === 'admin') return 'Quản trị viên';
-    if (role === 'doctor') return 'Bác sĩ';
-    if (role === 'nurse') return 'Y tá';
-    if (role === 'patient') return 'Bệnh nhân';
-    return role || 'Chưa cập nhật';
+  const getGenderLabel = gender => {
+    if (gender === 'male') return 'Nam';
+    if (gender === 'female') return 'Nữ';
+    if (gender === 'other') return 'Khác';
+    return gender || 'Chưa cập nhật';
   };
 
   const changeForm = (field, value) => setForm(current => ({ ...current, [field]: value }));
 
-  const pickAvatar = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const loadPatientProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const res = await authApis(token).get(endpoints['patient-profile']);
 
-    if (permission.status !== 'granted') {
-      Alert.alert('Thông báo', 'Bạn cần cấp quyền truy cập thư viện ảnh.');
-      return;
+      setPatientProfile(res.data);
+
+      setForm({
+        first_name: user?.first_name || '',
+        last_name: user?.last_name || '',
+        dob: user?.dob || '',
+        gender: user?.gender || '',
+        blood_group: res.data?.blood_group || '',
+        insurance_number: res.data?.insurance_number || '',
+        insurance_expiry_date: res.data?.insurance_expiry_date || '',
+        height: res.data?.height ? String(res.data.height) : '',
+        weight: res.data?.weight ? String(res.data.weight) : '',
+        allergy_history: res.data?.allergy_history || '',
+      });
+    } catch (err) {
+      console.log(err?.response?.data || err);
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled) changeForm('avatar', result.assets[0]);
   };
 
-  const getAvatarSource = () => {
-    if (form.avatar?.uri) return { uri: form.avatar.uri };
-    if (user?.avatar) return { uri: user.avatar };
-    return null;
-  };
+  useEffect(() => {
+    setForm(current => ({
+      ...current,
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      dob: user?.dob || '',
+      gender: user?.gender || '',
+    }));
+
+    loadPatientProfile();
+  }, [user]);
 
   const saveProfile = async () => {
     try {
       setLoading(true);
 
       const token = await AsyncStorage.getItem('access_token');
-      const data = new FormData();
+      const userData = new FormData();
 
-      data.append('first_name', form.first_name);
-      data.append('last_name', form.last_name);
-      data.append('email', form.email);
-      data.append('phone', form.phone);
-      data.append('role', form.role);
+      userData.append('first_name', form.first_name);
+      userData.append('last_name', form.last_name);
+      userData.append('dob', form.dob);
+      userData.append('gender', form.gender);
 
-      if (form.avatar) {
-        data.append('avatar', {
-          uri: form.avatar.uri,
-          name: form.avatar.fileName || 'avatar.jpg',
-          type: form.avatar.mimeType || 'image/jpeg',
-        });
-      }
-
-      const res = await authApis(token).patch(endpoints['current-user'], data, {
+      const userRes = await authApis(token).patch(endpoints['current-user'], userData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      dispatch({ type: 'LOGIN', payload: res.data });
+      const profileData = {
+        height: form.height || null,
+        weight: form.weight || null,
+        insurance_number: form.insurance_number,
+        insurance_expiry_date: form.insurance_expiry_date || null,
+        blood_group: form.blood_group,
+        allergy_history: form.allergy_history,
+      };
 
+      const profileRes = await authApis(token).patch(endpoints['patient-profile'], profileData);
+
+      dispatch({ type: 'LOGIN', payload: userRes.data });
+      setPatientProfile(profileRes.data);
       setIsEditing(false);
       Alert.alert('Thành công', 'Cập nhật hồ sơ thành công!');
     } catch (err) {
@@ -114,28 +131,17 @@ const Profile = ({ navigation }) => {
     setForm({
       first_name: user?.first_name || '',
       last_name: user?.last_name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      role: user?.role || '',
-      avatar: null,
+      dob: user?.dob || '',
+      gender: user?.gender || '',
+      blood_group: patientProfile?.blood_group || '',
+      insurance_number: patientProfile?.insurance_number || '',
+      insurance_expiry_date: patientProfile?.insurance_expiry_date || '',
+      height: patientProfile?.height ? String(patientProfile.height) : '',
+      weight: patientProfile?.weight ? String(patientProfile.weight) : '',
+      allergy_history: patientProfile?.allergy_history || '',
     });
 
     setIsEditing(false);
-  };
-
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('access_token');
-      dispatch({ type: 'LOGOUT' });
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
-    } catch (err) {
-      console.log(err);
-      Alert.alert('Lỗi', 'Đăng xuất thất bại!');
-    }
   };
 
   const handleTabPress = ({ route }) => {
@@ -143,84 +149,65 @@ const Profile = ({ navigation }) => {
     setIndex(newIndex);
 
     if (route.key === 'home') navigation.navigate('Home');
-    if (route.key === 'account' || route.key === 'profile') navigation.navigate('Profile');
+    if (route.key === 'schedule') navigation.navigate('MyAppointment');
+    if (route.key === 'profile') navigation.navigate('Profile');
+    if (route.key === 'account') navigation.navigate('Account');
   };
 
-  const avatarSource = getAvatarSource();
+  const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Chưa cập nhật';
 
   return (
-    <View style={styles.profileContainer}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          {avatarSource ? <Avatar.Image size={80} source={avatarSource} /> : <Avatar.Text size={80} label={avatarLabel || 'U'} />}
-
-          <Text style={styles.name}>{fullName}</Text>
-          <Text style={styles.email}>{user?.email || 'Chưa có email'}</Text>
-        </View>
-
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.content}>
-          {!isEditing ? (
-            <>
-              <Card style={styles.card}>
-                <Card.Title title="Thông tin cá nhân" />
+          <Card style={styles.card}>
+            <Card.Title title="Hồ sơ bệnh nhân" subtitle="Thông tin cá nhân và y tế" />
 
-                <Card.Content>
-                  <List.Item title="Họ và tên" description={fullName} left={props => <List.Icon {...props} icon="account" />} />
-                  <Divider />
+            {!isEditing ? (
+              <View>
+                <List.Item title="Họ tên" description={fullName} left={props => <List.Icon {...props} icon="account" />} />
+                <Divider />
+                <List.Item title="Ngày sinh" description={user?.dob || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="calendar" />} />
+                <Divider />
+                <List.Item title="Giới tính" description={getGenderLabel(user?.gender)} left={props => <List.Icon {...props} icon="gender-male-female" />} />
+                <Divider />
+                <List.Item title="Nhóm máu" description={patientProfile?.blood_group || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="water" />} />
+                <Divider />
+                <List.Item title="Số bảo hiểm" description={patientProfile?.insurance_number || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="card-account-details" />} />
+                <Divider />
+                <List.Item title="Ngày hết hạn bảo hiểm" description={patientProfile?.insurance_expiry_date || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="calendar-alert" />} />
+                <Divider />
+                <List.Item title="Chiều cao" description={patientProfile?.height ? `${patientProfile.height} cm` : 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="human-male-height" />} />
+                <Divider />
+                <List.Item title="Cân nặng" description={patientProfile?.weight ? `${patientProfile.weight} kg` : 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="weight-kilogram" />} />
+                <Divider />
+                <List.Item title="Tiền sử dị ứng" description={patientProfile?.allergy_history || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="alert-circle" />} />
 
-                  <List.Item title="Email" description={user?.email || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="email" />} />
-                  <Divider />
+                <Button mode="contained" style={styles.button} onPress={() => setIsEditing(true)}>Chỉnh sửa hồ sơ</Button>
+              </View>
+            ) : (
+              <View>
+                <TextInput label="Tên" value={form.first_name} style={styles.input} mode="outlined" onChangeText={text => changeForm('first_name', text)} />
+                <TextInput label="Họ" value={form.last_name} style={styles.input} mode="outlined" onChangeText={text => changeForm('last_name', text)} />
+                <TextInput label="Ngày sinh YYYY-MM-DD" value={form.dob} style={styles.input} mode="outlined" onChangeText={text => changeForm('dob', text)} />
+                <TextInput label="Giới tính male/female/other" value={form.gender} style={styles.input} mode="outlined" onChangeText={text => changeForm('gender', text)} />
+                <TextInput label="Nhóm máu" value={form.blood_group} style={styles.input} mode="outlined" onChangeText={text => changeForm('blood_group', text)} />
+                <TextInput label="Số bảo hiểm" value={form.insurance_number} style={styles.input} mode="outlined" onChangeText={text => changeForm('insurance_number', text)} />
+                <TextInput label="Ngày hết hạn bảo hiểm YYYY-MM-DD" value={form.insurance_expiry_date} style={styles.input} mode="outlined" onChangeText={text => changeForm('insurance_expiry_date', text)} />
+                <TextInput label="Chiều cao cm" value={form.height} style={styles.input} mode="outlined" keyboardType="numeric" onChangeText={text => changeForm('height', text)} />
+                <TextInput label="Cân nặng kg" value={form.weight} style={styles.input} mode="outlined" keyboardType="numeric" onChangeText={text => changeForm('weight', text)} />
+                <TextInput label="Tiền sử dị ứng" value={form.allergy_history} style={styles.input} mode="outlined" multiline onChangeText={text => changeForm('allergy_history', text)} />
 
-                  <List.Item title="Số điện thoại" description={user?.phone || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="phone" />} />
-                  <Divider />
+                <Button mode="contained" loading={loading} disabled={loading} style={styles.button} onPress={saveProfile}>Lưu hồ sơ</Button>
+                <Button mode="outlined" style={styles.button} onPress={cancelEdit}>Hủy</Button>
+              </View>
+            )}
 
-                  <List.Item title="Vai trò" description={getRoleLabel(user?.role)} left={props => <List.Icon {...props} icon="account-badge" />} />
-                </Card.Content>
-              </Card>
-
-              <Button mode="contained" icon="account-edit" style={styles.button} onPress={() => setIsEditing(true)}>
-                Chỉnh sửa hồ sơ
-              </Button>
-
-              <Button mode="outlined" icon="logout" style={styles.button} onPress={logout}>
-                Đăng xuất
-              </Button>
-            </>
-          ) : (
-            <>
-              <Card style={styles.card}>
-                <Card.Title title="Chỉnh sửa hồ sơ" />
-
-                <Card.Content>
-                  <View style={styles.avatarWrapper}>
-                    {avatarSource ? <Avatar.Image size={90} source={avatarSource} /> : <Avatar.Text size={90} label={avatarLabel || 'U'} />}
-
-                    <Button mode="outlined" icon="camera" style={styles.avatarButton} onPress={pickAvatar}>
-                      Chọn ảnh đại diện
-                    </Button>
-                  </View>
-
-                  <TextInput label="Họ" mode="outlined" value={form.first_name} style={styles.profileInput} onChangeText={text => changeForm('first_name', text)} />
-                  <TextInput label="Tên" mode="outlined" value={form.last_name} style={styles.profileInput} onChangeText={text => changeForm('last_name', text)} />
-                  <TextInput label="Email" mode="outlined" value={form.email} keyboardType="email-address" autoCapitalize="none" style={styles.profileInput} onChangeText={text => changeForm('email', text)} />
-                  <TextInput label="Số điện thoại" mode="outlined" value={form.phone} keyboardType="phone-pad" style={styles.profileInput} onChangeText={text => changeForm('phone', text)} />
-                  <TextInput label="Vai trò" mode="outlined" value={form.role} style={styles.profileInput} onChangeText={text => changeForm('role', text)} />
-                </Card.Content>
-              </Card>
-
-              <Button mode="contained" icon="content-save" style={styles.button} loading={loading} disabled={loading} onPress={saveProfile}>
-                Lưu hồ sơ
-              </Button>
-
-              <Button mode="outlined" icon="close" style={styles.button} disabled={loading} onPress={cancelEdit}>
-                Hủy
-              </Button>
-            </>
-          )}
+          </Card>
         </View>
       </ScrollView>
 
-      <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} />
+            <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} renderScene={renderScene} />
     </View>
   );
 };

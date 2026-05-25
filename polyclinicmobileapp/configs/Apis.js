@@ -7,6 +7,7 @@ export const endpoints = {
   'register': '/users/',
   'login': '/o/token/',
   'current-user': '/users/current-user/',
+  'patient-profile': '/patient-profiles/current-profile/',
 
   'specialties': '/specialties/',
   'services': '/services/',

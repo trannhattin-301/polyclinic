@@ -8,6 +8,7 @@ import RegisterScreen from './screens/User/Register';
 import LoginScreen from './screens/User/Login';
 import HomeScreen from './screens/Home/Home';
 import ProfileScreen from './screens/User/Profile';
+import AccountScreen from './screens/User/Account';
 
 import SelectSpecialty from './Appointment/SelectSpecialty';
 import SelectDoctor from './Appointment/SelectDoctor';
@@ -48,7 +49,8 @@ export default function App() {
               <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-
+              <Stack.Screen name="Account" component={AccountScreen} options={{ headerShown: true, title: 'Tài khoản' }} />
+              
               <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: true, title: 'Thông tin tài khoản' }} />
               <Stack.Screen name="SelectSpecialty" component={SelectSpecialty} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
               <Stack.Screen name="SelectDoctor" component={SelectDoctor} options={{ headerShown: true, title: 'Chọn bác sĩ' }} />
