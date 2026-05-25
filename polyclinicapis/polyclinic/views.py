@@ -249,6 +249,27 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
 
         return Response(serializers.ChatMessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
+    @action(methods=['patch'], url_path='confirm', detail=True)
+    def confirm(self, request, pk=None):
+        appointment = self.get_object()
+        appointment.status = Appointment.Status.CONFIRMED
+        appointment.save()
+        return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], url_path='start', detail=True)
+    def start(self, request, pk=None):
+        appointment = self.get_object()
+        appointment.status = Appointment.Status.IN_PROGRESS
+        appointment.save()
+        return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], url_path='complete', detail=True)
+    def complete(self, request, pk=None):
+        appointment = self.get_object()
+        appointment.status = Appointment.Status.COMPLETED
+        appointment.save()
+        return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
 class MedicalRecordViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MedicalRecordSerializer
 
@@ -289,10 +310,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
         appointment = serializer.validated_data['appointment']
 
         if appointment.doctor.user != self.request.user:
-            raise serializers.serializers.ValidationError(
-                {'appointment': 'Bác sĩ chỉ được tạo bệnh án cho lịch khám của mình.'}
-            )
-
+            raise ValidationError({'appointment': 'Bác sĩ chỉ được tạo bệnh án cho lịch khám của mình.'})
         serializer.save()
 
 
