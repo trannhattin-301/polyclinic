@@ -31,6 +31,16 @@ export default StyleSheet.create({
     color: 'blue',
   },
 
+  input: {
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+
+  chip: {
+    alignSelf: 'flex-start',
+    marginVertical: 8,
+  },
+
   button: {
     marginTop: 10,
   },

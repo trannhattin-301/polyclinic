@@ -14,10 +14,21 @@ export const endpoints = {
   'work-schedules': '/work-schedules/',
   'time-slots': '/time-slots/',
   'appointments': '/appointments/',
+
+  'medical-records': '/medical-records/',
+  'prescriptions': '/prescriptions/',
+
   'medicine-categories': '/medicine-categories/',
   'medicines': '/medicines/',
   'inventory-transactions': '/inventory-transactions/',
-  'appointment-messages': (appointmentId) => `/appointments/${appointmentId}/messages/`,
+
+  'appointment-messages': appointmentId => `/appointments/${appointmentId}/messages/`,
+};
+
+export const appointmentStatusEndpoints = {
+  confirm: id => `/appointments/${id}/confirm/`,
+  start: id => `/appointments/${id}/start/`,
+  complete: id => `/appointments/${id}/complete/`,
 };
 
 export const authApis = (token) => {

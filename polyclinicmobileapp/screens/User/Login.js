@@ -61,8 +61,12 @@ const Login = () => {
 
       console.log('Current user:', currentUser.data);
 
-      if (currentUser.data.role === 'staff') navigation.navigate('DoctorHome');
-      else navigation.navigate('Home');
+      if (currentUser.data.role === 'doctor')
+        navigation.navigate('DoctorHome');
+      else if (currentUser.data.role === 'nurse')
+        navigation.navigate('DoctorHome');
+      else
+        navigation.navigate('Home');
     } catch (ex) {
       console.log('Lỗi đăng nhập:', ex.response?.data || ex.message);
 

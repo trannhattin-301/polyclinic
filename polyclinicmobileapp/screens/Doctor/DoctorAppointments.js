@@ -39,7 +39,8 @@ const DoctorAppointments = ({ navigation }) => {
   const getStatus = s => {
     if (s === 'pending') return 'Chờ xác nhận';
     if (s === 'confirmed') return 'Đã xác nhận';
-    if (s === 'completed') return 'Đã khám';
+    if (s === 'in_progress') return 'Đang khám';
+    if (s === 'completed') return 'Hoàn thành';
     if (s === 'cancelled') return 'Đã hủy';
     return 'Chưa cập nhật';
   };
@@ -81,7 +82,7 @@ const DoctorAppointments = ({ navigation }) => {
               Chat
             </Button>
           </View>
-    
+
         </Card.Content>
       </Card>
     );
