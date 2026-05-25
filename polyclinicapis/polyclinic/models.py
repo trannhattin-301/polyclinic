@@ -305,3 +305,11 @@ class Invoice(BaseModel):
     paid_at        = models.DateTimeField(null=True, blank=True)
     total_amount   = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes          = models.TextField(blank=True, null=True)
+
+class ChatMessage(BaseModel):
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE,  related_name="sent_messages")
+    content = models.TextField()
+
+    class Meta:
+        ordering = ["created_date"]

@@ -5,7 +5,7 @@ from .models import (
     PatientProfile, WorkSchedule, TimeSlot, Appointment,
     MedicalRecord, MedicineCategory, Medicine,
     Prescription, PrescriptionItem, InventoryTransaction,
-    TestResult, Invoice
+    TestResult, Invoice, ChatMessage
 )
 
 # User
@@ -482,3 +482,12 @@ class MedicineSerializer(serializers.ModelSerializer):
         data['is_expired'] = instance.is_expired()
         data['is_near_expiry'] = instance.is_near_expiry()
         return data
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.username', read_only=True)
+
+    class Meta:
+        model = ChatMessage
+        fields = ['id', 'appointment', 'sender', 'sender_name', 'content', 'created_date']
+        read_only_fields = ['appointment', 'sender', 'created_date']

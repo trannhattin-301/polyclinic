@@ -11,10 +11,11 @@ from polyclinic import serializers
 from polyclinic.models import (
     User, Specialty, ServicesSpecialty, StaffProfile,
     PatientProfile, WorkSchedule, TimeSlot, Appointment, MedicalRecord,
-    MedicineCategory, Medicine, Prescription, PrescriptionItem, InventoryTransaction,
-    TestResult, Invoice
+    MedicineCategory, Medicine, Prescription, InventoryTransaction,
+    TestResult, Invoice, ChatMessage
 )
 from polyclinic import perms
+
 
 
 class UserViewSet(viewsets.GenericViewSet, generics.CreateAPIView):
@@ -170,8 +171,28 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
+def can_access_appointment(user, appointment):
+    if user.is_staff or user.is_superuser:
+        return True
+
+    if appointment.patient_id == user.id:
+        return True
+
+    if hasattr(user, 'staff_profile'):
+        return appointment.time_slot.work_schedule.staff_profile_id == user.staff_profile.id
+
+    return False
+
+
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView, generics.RetrieveAPIView):
-    queryset = Appointment.objects.select_related('patient', 'time_slot', 'time_slot__work_schedule', 'time_slot__work_schedule__staff_profile', 'time_slot__work_schedule__staff_profile__user').prefetch_related('services').all()
+    queryset = Appointment.objects.select_related(
+        'patient',
+        'time_slot',
+        'time_slot__work_schedule',
+        'time_slot__work_schedule__staff_profile',
+        'time_slot__work_schedule__staff_profile__user'
+    ).prefetch_related('services').all()
+
     serializer_class = serializers.AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.OrderingFilter]
@@ -199,10 +220,34 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Create
     @action(methods=['patch'], url_path='cancel', detail=True)
     def cancel(self, request, pk=None):
         appointment = self.get_object()
+
+        if not can_access_appointment(request.user, appointment):
+            return Response({'detail': 'Bạn không có quyền truy cập.'}, status=status.HTTP_403_FORBIDDEN)
+
         appointment.status = Appointment.Status.CANCELLED
         appointment.save()
+
         return Response(serializers.AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
 
+    @action(methods=['get', 'post'], detail=True, url_path='messages')
+    def messages(self, request, pk=None):
+        appointment = self.get_object()
+
+        if not can_access_appointment(request.user, appointment):
+            return Response({'detail': 'Bạn không có quyền truy cập.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if request.method == 'GET':
+            messages = appointment.messages.select_related('sender').all()
+            return Response(serializers.ChatMessageSerializer(messages, many=True).data, status=status.HTTP_200_OK)
+
+        content = request.data.get('content', '').strip()
+
+        if not content:
+            return Response({'detail': 'Nội dung tin nhắn không được trống.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        message = ChatMessage.objects.create(appointment=appointment, sender=request.user, content=content)
+
+        return Response(serializers.ChatMessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MedicalRecordSerializer
@@ -752,3 +797,4 @@ class MedicineViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
+
