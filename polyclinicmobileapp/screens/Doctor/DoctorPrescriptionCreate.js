@@ -23,6 +23,7 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [medicineSearch, setMedicineSearch] = useState('');
 
   useEffect(() => {
     loadMedicines();
@@ -67,6 +68,7 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
     setTiming('');
     setDuration('');
     setItemNote('');
+    setMedicineSearch('');
     setAdding(true);
   };
 
@@ -143,12 +145,17 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
 
   const currentRecord = medicalRecord || selectedRecord;
 
+  const filteredMedicines = medicines.filter(m =>
+    m.name.toLowerCase().includes(medicineSearch.toLowerCase()) ||
+    (m.category?.name && m.category.name.toLowerCase().includes(medicineSearch.toLowerCase()))
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={{ backgroundColor: '#f5f5f5' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 12 }}>
       <Text style={styles.title}>Kê đơn thuốc</Text>
 
       {!currentRecord ? (
-        <View style={{ marginTop: 12 }}>
+        <View style={{ marginTop: 12, marginBottom: 40 }}>
           <Text style={{ marginBottom: 8, fontWeight: '600' }}>Chọn bệnh án để kê đơn</Text>
           <FlatList
             data={medicalRecords}
@@ -162,52 +169,131 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
                 </Card.Content>
               </Card>
             )}
-            nestedScrollEnabled
+            scrollEnabled={false}
             style={{ maxHeight: 400 }}
             ListEmptyComponent={<Text>Chưa có bệnh án nào để kê đơn</Text>}
           />
         </View>
       ) : (
-        <View style={{ marginTop: 12 }}>
+        <View style={{ marginTop: 12, marginBottom: 40 }}>
           <Text style={{ marginBottom: 8, fontWeight: '600' }}>Bệnh án đã chọn: #{currentRecord.id}</Text>
-          <Button mode="outlined" onPress={startAdd} style={{ marginBottom: 12 }}>
-            Bắt đầu kê đơn
-          </Button>
+          
+          {!adding && (
+            <Button mode="outlined" onPress={startAdd} style={{ marginBottom: 12 }}>
+              Bắt đầu kê đơn
+            </Button>
+          )}
 
           {adding && (
-            <Card style={{ padding: 8 }}>
-              <Text variant="titleMedium">Chọn thuốc</Text>
-              <FlatList
-                data={medicines}
-                keyExtractor={m => m.id?.toString() || Math.random().toString()}
-                renderItem={({ item }) => (
-                  <Card style={{ marginTop: 8 }} onPress={() => setSelectedMedicine(item)}>
-                    <Card.Content>
-                      <Text>{item.name} ({item.stock})</Text>
-                    </Card.Content>
-                    {selectedMedicine?.id === item.id && <IconButton icon="check" />}
-                  </Card>
-                )}
-                nestedScrollEnabled
-                style={{ maxHeight: 250 }}
+            <>
+              <TextInput 
+                placeholder="Tìm kiếm theo tên thuốc hoặc loại" 
+                value={medicineSearch} 
+                onChangeText={setMedicineSearch}
+                mode="outlined"
+                style={{ marginBottom: 12 }}
               />
+              
+              <Text variant="titleMedium" style={{ marginBottom: 12, fontWeight: '600' }}>Chọn thuốc</Text>
+              {filteredMedicines.map((item) => (
+                <Card 
+                  key={item.id}
+                  style={{ 
+                    marginBottom: 8, 
+                    backgroundColor: selectedMedicine?.id === item.id ? '#e3f2fd' : '#fff',
+                    borderWidth: selectedMedicine?.id === item.id ? 2 : 0,
+                    borderColor: selectedMedicine?.id === item.id ? '#2196F3' : 'transparent'
+                  }} 
+                  onPress={() => setSelectedMedicine(item)}
+                >
+                  <Card.Content>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontWeight: '600', fontSize: 16 }}>{item.name}</Text>
+                        <Text style={{ fontSize: 13, color: '#666', marginTop: 4 }}>Loại: {item.category?.name || 'Không rõ'}</Text>
+                        <Text style={{ fontSize: 13, color: '#999', marginTop: 2 }}>Tồn kho: {item.stock}</Text>
+                      </View>
+                      {selectedMedicine?.id === item.id && (
+                        <IconButton icon="check-circle" iconColor="#2196F3" size={28} />
+                      )}
+                    </View>
+                  </Card.Content>
+                </Card>
+              ))}
+              {filteredMedicines.length === 0 && (
+                <Card style={{ marginBottom: 12, backgroundColor: '#f5f5f5' }}>
+                  <Card.Content>
+                    <Text style={{ textAlign: 'center', color: '#999' }}>Không tìm thấy thuốc nào</Text>
+                  </Card.Content>
+                </Card>
+              )}
 
-              <TextInput label="Số lượng" keyboardType="numeric" value={qty} onChangeText={setQty} style={{ marginTop: 8 }} />
-              <TextInput label="Liều (vd: 1 viên)" value={dosage} onChangeText={setDosage} style={{ marginTop: 8 }} />
-              <TextInput label="Tần suất (vd: 2 lần/ngày)" value={frequency} onChangeText={setFrequency} style={{ marginTop: 8 }} />
-              <TextInput label="Thời điểm (trước/sau ăn)" value={timing} onChangeText={setTiming} style={{ marginTop: 8 }} />
-              <TextInput label="Số ngày" keyboardType="numeric" value={duration} onChangeText={setDuration} style={{ marginTop: 8 }} />
-              <TextInput label="Ghi chú (thuốc)" value={itemNote} onChangeText={setItemNote} style={{ marginTop: 8 }} />
+              <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0' }}>
+                <Text variant="titleMedium" style={{ marginBottom: 12, fontWeight: '600' }}>Thông tin liều lượng</Text>
+                <TextInput 
+                  label="Số lượng *" 
+                  keyboardType="numeric" 
+                  value={qty} 
+                  onChangeText={setQty} 
+                  style={{ marginBottom: 12 }} 
+                  mode="outlined" 
+                />
+                <TextInput 
+                  label="Liều (vd: 1 viên)" 
+                  value={dosage} 
+                  onChangeText={setDosage} 
+                  style={{ marginBottom: 12 }} 
+                  mode="outlined" 
+                />
+                <TextInput 
+                  label="Tần suất (vd: 2 lần/ngày)" 
+                  value={frequency} 
+                  onChangeText={setFrequency} 
+                  style={{ marginBottom: 12 }} 
+                  mode="outlined" 
+                />
+                <TextInput 
+                  label="Thời điểm (trước/sau ăn)" 
+                  value={timing} 
+                  onChangeText={setTiming} 
+                  style={{ marginBottom: 12 }} 
+                  mode="outlined" 
+                />
+                <TextInput 
+                  label="Số ngày" 
+                  keyboardType="numeric" 
+                  value={duration} 
+                  onChangeText={setDuration} 
+                  style={{ marginBottom: 12 }} 
+                  mode="outlined" 
+                />
+                <TextInput 
+                  label="Ghi chú (thuốc)" 
+                  value={itemNote} 
+                  onChangeText={setItemNote} 
+                  style={{ marginBottom: 16 }} 
+                  mode="outlined" 
+                  multiline
+                />
 
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                <Button mode="contained" onPress={addItem}>
-                  Thêm vào đơn
-                </Button>
-                <Button mode="outlined" onPress={() => setAdding(false)}>
-                  Hủy
-                </Button>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Button 
+                    mode="contained" 
+                    onPress={addItem} 
+                    style={{ flex: 1 }}
+                  >
+                    Thêm vào đơn
+                  </Button>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => { setAdding(false); setMedicineSearch(''); }} 
+                    style={{ flex: 1 }}
+                  >
+                    Hủy
+                  </Button>
+                </View>
               </View>
-            </Card>
+            </>
           )}
 
           <Text style={{ marginTop: 12, fontWeight: '600' }}>Các thuốc trong đơn:</Text>
@@ -215,7 +301,8 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
           {items.map((it, idx) => (
             <Card key={idx} style={{ marginTop: 8 }}>
               <Card.Content>
-                <Text>{it.medicine_detail?.name || it.medicine} x{it.quantity}</Text>
+                <Text style={{ fontWeight: '600' }}>{it.medicine_detail?.name || it.medicine}</Text>
+                <Text>Số lượng: {it.quantity}</Text>
                 <Text>Liều: {it.dosage}</Text>
                 <Text>Tần suất: {it.frequency}</Text>
                 <Text>Thời gian: {it.duration_days} ngày</Text>
@@ -227,8 +314,20 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
             </Card>
           ))}
 
-          <TextInput label="Ghi chú đơn thuốc" value={notes} onChangeText={setNotes} style={{ marginTop: 12 }} />
-          <Button mode="contained" onPress={submitPrescription} loading={loadingSubmit} style={{ marginTop: 12 }}>
+          <TextInput 
+            label="Ghi chú đơn thuốc" 
+            value={notes} 
+            onChangeText={setNotes} 
+            style={{ marginTop: 12 }} 
+            mode="outlined"
+            multiline
+          />
+          <Button 
+            mode="contained" 
+            onPress={submitPrescription} 
+            loading={loadingSubmit} 
+            style={{ marginTop: 12, marginBottom: 40 }}
+          >
             Lưu đơn thuốc
           </Button>
         </View>

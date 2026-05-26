@@ -223,25 +223,25 @@ class Prescription(BaseModel):
 
 
 class PrescriptionItem(BaseModel):
-    class Frequency(models.TextChoices):
-        ONCE_DAILY   = "1x_day",  "1 lần/ngày"
-        TWICE_DAILY  = "2x_day",  "2 lần/ngày"
-        THREE_DAILY  = "3x_day",  "3 lần/ngày"
-        FOUR_DAILY   = "4x_day",  "4 lần/ngày"
-        AS_NEEDED    = "as_needed", "Khi cần"
-
-    class Timing(models.TextChoices):
-        BEFORE_MEAL = "before_meal", "Trước ăn"
-        AFTER_MEAL  = "after_meal",  "Sau ăn"
-        WITH_MEAL   = "with_meal",   "Trong khi ăn"
-        BEDTIME     = "bedtime",     "Trước khi ngủ"
+    # class Frequency(models.TextChoices):
+    #     ONCE_DAILY   = "1x_day",  "1 lần/ngày"
+    #     TWICE_DAILY  = "2x_day",  "2 lần/ngày"
+    #     THREE_DAILY  = "3x_day",  "3 lần/ngày"
+    #     FOUR_DAILY   = "4x_day",  "4 lần/ngày"
+    #     AS_NEEDED    = "as_needed", "Khi cần"
+    #
+    # class Timing(models.TextChoices):
+    #     BEFORE_MEAL = "before_meal", "Trước ăn"
+    #     AFTER_MEAL  = "after_meal",  "Sau ăn"
+    #     WITH_MEAL   = "with_meal",   "Trong khi ăn"
+    #     BEDTIME     = "bedtime",     "Trước khi ngủ"
 
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name="items")
     medicine     = models.ForeignKey(Medicine, on_delete=models.PROTECT, related_name="prescription_items")
     quantity     = models.PositiveIntegerField(help_text="Tổng số lượng")
     dosage       = models.CharField(max_length=50, help_text="Liều mỗi lần, vd: 1 viên, 2 viên")
-    frequency    = models.CharField(max_length=20, choices=Frequency.choices)
-    timing       = models.CharField(max_length=20, choices=Timing.choices, blank=True)
+    frequency    = models.CharField(max_length=20, )
+    timing       = models.CharField(max_length=20,  blank=True)
     duration_days= models.IntegerField(help_text="Số ngày uống")
     notes        = models.TextField(blank=True, null=True, help_text="Ghi chú riêng cho thuốc này")
 
