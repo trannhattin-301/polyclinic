@@ -24,4 +24,5 @@ router.register('patient-profiles', views.PatientProfileViewSet, basename='patie
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('admin-reports/', views.AdminReportView.as_view(), name='admin-reports'),
 ]

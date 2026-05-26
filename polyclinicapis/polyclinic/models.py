@@ -18,6 +18,7 @@ class User(AbstractUser):
     email = models.EmailField(max_length=255, blank=True, null=True,unique=True)
 
     class Role(models.TextChoices):
+        ADMIN = "admin", "Quản trị"
         PATIENT="patient", "Bệnh nhân"
         DOCTOR="doctor", "Bác sĩ"
         NURSE="nurse", "Y tá"

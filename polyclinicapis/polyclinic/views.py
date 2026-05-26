@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from polyclinic import serializers
+from rest_framework.views import APIView
 from polyclinic.models import (
     User, Specialty, ServicesSpecialty, StaffProfile,
     PatientProfile, WorkSchedule, TimeSlot, Appointment, MedicalRecord,
@@ -888,3 +889,26 @@ class MedicineViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
+class AdminReportView(APIView):
+    permission_classes = [perms.IsAdmin]
+
+    def get(self, request):
+        overview = {
+            "total_patients": PatientProfile.objects.filter(active=True).count(),
+            "total_doctors": StaffProfile.objects.filter(active=True, user__role=User.Role.DOCTOR).count(),
+            "total_medicines": Medicine.objects.filter(active=True).count(),
+            "total_appointments": Appointment.objects.filter(active=True).count(),
+        }
+
+        appointment_status = {
+            "pending": Appointment.objects.filter(active=True, status=Appointment.Status.PENDING).count(),
+            "confirmed": Appointment.objects.filter(active=True, status=Appointment.Status.CONFIRMED).count(),
+            "in_progress": Appointment.objects.filter(active=True, status=Appointment.Status.IN_PROGRESS).count(),
+            "completed": Appointment.objects.filter(active=True, status=Appointment.Status.COMPLETED).count(),
+            "cancelled": Appointment.objects.filter(active=True, status=Appointment.Status.CANCELLED).count(),
+        }
+
+        return Response({
+            "overview": overview,
+            "appointment_status": appointment_status,
+        })
