@@ -3,6 +3,7 @@ import { View, Text, FlatList } from 'react-native';
 import { BottomNavigation, Searchbar, Card } from 'react-native-paper';
 import { FontAwesome } from '@expo/vector-icons';
 import styles from './Styles';
+import { MyUserContext } from '../../configs/Contexts';
 
 
 const HomeRoute = () => <Text>Trang chủ</Text>;
@@ -58,10 +59,11 @@ const Home = ({ navigation }) => {
     { key: 'consult', label: 'Tư vấn online', icon: 'phone' },
   ];
 
+  const currentUser = useContext(MyUserContext);
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Xin chào, [Tên người dùng]</Text>
+        <Text style={styles.headerTitle}>Xin chào, {currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Người dùng'}</Text>
         <Searchbar
           placeholder="Search"
           onChangeText={setSearchQuery}
