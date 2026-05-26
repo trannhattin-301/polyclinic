@@ -11,7 +11,7 @@ import { authApis, endpoints } from '../configs/Apis';
 import { MyUserContext } from '../configs/Contexts';
 
 const Chat = ({ route, navigation }) => {
-    const { appointment } = route.params;
+    const { appointment } = route.params || {};
 
     const user = useContext(MyUserContext);
 
@@ -65,9 +65,8 @@ const Chat = ({ route, navigation }) => {
     };
 
     useEffect(() => {
-        loadMessages();
-    }, []);
-
+        if (appointment?.id) loadMessages();
+    }, [appointment]);
     const isMyMessage = (item) => {
         if (item.sender === user?.id) return true;
         if (item.sender?.id === user?.id) return true;
@@ -103,6 +102,20 @@ const Chat = ({ route, navigation }) => {
             </View>
         );
     };
+
+    if (!appointment) {
+    return (
+        <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
+            <Text style={{ textAlign: 'center', marginBottom: 12 }}>
+                Vui lòng chọn lịch hẹn trước khi tư vấn.
+            </Text>
+
+            <Button mode="contained" onPress={() => navigation.navigate('MyAppointment')}>
+                Chọn lịch hẹn
+            </Button>
+        </View>
+    );
+}
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>

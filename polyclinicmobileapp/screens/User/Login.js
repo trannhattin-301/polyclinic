@@ -8,8 +8,8 @@ import styles from './Styles';
 import Apis, { endpoints, authApis } from '../../configs/Apis';
 import { MyDispatchContext } from '../../configs/Contexts';
 
-const CLIENT_ID = '42kqtXSm0XIZHk5Qy7drK5kfQ0BnHo6vpjK8G0xq'.trim();
-const CLIENT_SECRET = '5hTrEobTbiCFQsIjaFi8a0AGBG1GEfwheKpfltusGedzogbIdgo59k5TH7RJ9XOHLZRcYg1RvJwZQ7dgnXBEVIqvzWkc5uXRe8KJq9Ui9A3FDHyD50QaStng1KfLShDG'.trim();
+const CLIENT_ID = 'q0HDNWb5oJl8A43PWAdeROTsKb2UXf6L7gmliQ7O';
+const CLIENT_SECRET = 'pB2Mbo0DUM81Vjs2k4HP9WNX621UCtx8Jbp2v8yH2kDwG62Ua0U6U5kjoqDGOUvdwxXOX6tvzFhYJ6jnHbDhBBCo0HBjcJ6cXHirz50PiQjArWAeam34HwoUIZ6haEUM';
 
 const userInfo = [
   { field: 'username', label: 'Tên đăng nhập', icon: 'account' },
