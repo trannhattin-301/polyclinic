@@ -54,3 +54,13 @@ class IsWorkScheduleOwner(permissions.IsAuthenticated):
             super().has_permission(request, view) and
             request.user == WorkSchedule.staff_profile.user
         )
+
+class IsAdmin(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        return (
+            super().has_permission(request, view)
+            and (
+                request.user.role == User.Role.ADMIN
+                or request.user.is_superuser
+            )
+        )
