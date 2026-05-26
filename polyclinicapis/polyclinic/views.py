@@ -12,7 +12,7 @@ from polyclinic.models import (
     User, Specialty, ServicesSpecialty, StaffProfile,
     PatientProfile, WorkSchedule, TimeSlot, Appointment, MedicalRecord,
     MedicineCategory, Medicine, Prescription, InventoryTransaction,
-    TestResult, Invoice, ChatMessage
+    TestResult, Invoice, ChatMessage, PrescriptionItem
 )
 from polyclinic import perms
 
@@ -376,15 +376,74 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
 
         return queryset.filter(medical_record__appointment__patient=user)
 
-    def perform_create(self, serializer):
-        medical_record = serializer.validated_data['medical_record']
+    def create(self, request, *args, **kwargs):
+        medical_record_id = request.data.get('medical_record')
+        items_data = request.data.get('items', [])
+        notes = request.data.get('notes', '')
 
-        if medical_record.get_doctor().user != self.request.user:
-            raise ValidationError(
-                {'medical_record': 'Doctor can only create prescriptions for their own medical records.'}
+        # Validate medical_record tồn tại
+        try:
+            medical_record = MedicalRecord.objects.get(pk=medical_record_id, active=True)
+        except MedicalRecord.DoesNotExist:
+            raise ValidationError({'medical_record': 'Bệnh án không tồn tại.'})
+
+        # Chỉ bác sĩ phụ trách mới được kê đơn
+        if medical_record.get_doctor().user != request.user:
+            raise ValidationError({'medical_record': 'Bác sĩ chỉ được kê đơn cho bệnh án của mình.'})
+
+        # Validate items không rỗng
+        if not items_data:
+            raise ValidationError({'items': 'Đơn thuốc phải có ít nhất một thuốc.'})
+
+        with transaction.atomic():
+            # get_or_create: tạo mới nếu chưa có, lấy lại nếu đã có
+            prescription, created = Prescription.objects.get_or_create(
+                medical_record=medical_record,
+                defaults={'notes': notes}
             )
 
-        serializer.save()
+            # Nếu đơn đã bị huỷ thì không cho thêm
+            if prescription.status == Prescription.Status.CANCELLED:
+                raise ValidationError({'detail': 'Đơn thuốc này đã bị huỷ, không thể thêm thuốc.'})
+
+            # Nếu đơn đã phát thì không cho sửa
+            if prescription.status == Prescription.Status.DISPENSED:
+                raise ValidationError({'detail': 'Đơn thuốc đã được phát, không thể chỉnh sửa.'})
+
+            # Cập nhật notes nếu đơn đã tồn tại
+            if not created and notes:
+                prescription.notes = notes
+                prescription.save(update_fields=['notes'])
+
+            # Thêm hoặc cập nhật từng thuốc
+            errors = []
+            for idx, item in enumerate(items_data):
+                medicine_id = item.get('medicine')
+                if not medicine_id:
+                    errors.append(f'Thuốc thứ {idx + 1}: thiếu medicine id.')
+                    continue
+
+                PrescriptionItem.objects.update_or_create(
+                    prescription=prescription,
+                    medicine_id=medicine_id,
+                    defaults={
+                        'quantity': item.get('quantity', 1),
+                        'dosage': item.get('dosage', ''),
+                        'frequency': item.get('frequency', ''),
+                        'timing': item.get('timing', ''),
+                        'duration_days': item.get('duration_days', 0),
+                        'notes': item.get('notes', ''),
+                    }
+                )
+
+            if errors:
+                raise ValidationError({'items': errors})
+
+        serializer = self.get_serializer(prescription)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
 
     def perform_update(self, serializer):
         prescription = self.get_object()
