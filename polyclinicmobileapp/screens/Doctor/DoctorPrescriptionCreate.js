@@ -131,8 +131,15 @@ const DoctorPrescriptionCreate = ({ route, navigation }) => {
       };
 
       const res = await authApis(token).post(endpoints.prescriptions, payload);
-      Alert.alert('Thành công', 'Đã tạo đơn thuốc');
-      navigation.goBack();
+      Alert.alert('Thành công', 'Đã lưu đơn thuốc', [
+        {
+          text: 'Xem đơn thuốc',
+          // ── Navigate tới Detail để Xác nhận và Phát thuốc ──
+          onPress: () => navigation.replace('DoctorPrescriptionDetail', {
+            prescriptionId: res.data.id
+          }),
+        }
+      ]);
     } catch (ex) {
       console.log('Lỗi tạo đơn thuốc:', ex.response?.data || ex.message || ex);
       Alert.alert('Lỗi', 'Không thể tạo đơn thuốc');
