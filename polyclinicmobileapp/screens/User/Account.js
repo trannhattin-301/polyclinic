@@ -8,46 +8,47 @@ import styles from './Styles';
 import { MyUserContext, MyDispatchContext } from '../../configs/Contexts';
 import { endpoints, authApis } from '../../configs/Apis';
 
+const routes = [
+  { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
+  { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
+  { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
+  { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
+  { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
+];
+
+const roleLabels = {
+  admin: 'Quản trị viên',
+  doctor: 'Bác sĩ',
+  nurse: 'Y tá',
+  patient: 'Bệnh nhân',
+};
+
+const getFormData = user => ({
+  first_name: user?.first_name || '',
+  last_name: user?.last_name || '',
+  email: user?.email || '',
+  phone: user?.phone || '',
+  role: user?.role || '',
+  avatar: null,
+});
+
 const Profile = ({ navigation }) => {
   const user = useContext(MyUserContext);
   const dispatch = useContext(MyDispatchContext);
 
   const [index, setIndex] = useState(4);
-  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(getFormData(user));
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', role: '', avatar: null });
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [routes] = useState([
-    { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
-    { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
-    { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
-    { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
-    { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
-  ]);
-
-  useEffect(() => {
-    setForm({
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      role: user?.role || '',
-      avatar: null,
-    });
-  }, [user]);
+  useEffect(() => setForm(getFormData(user)), [user]);
 
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || 'Người dùng';
   const avatarLabel = fullName.split(' ').filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase();
-
-  const getRoleLabel = role => {
-    if (role === 'admin') return 'Quản trị viên';
-    if (role === 'doctor') return 'Bác sĩ';
-    if (role === 'nurse') return 'Y tá';
-    if (role === 'patient') return 'Bệnh nhân';
-    return role || 'Chưa cập nhật';
-  };
+  const avatarSource = form.avatar?.uri ? { uri: form.avatar.uri } : user?.avatar ? { uri: user.avatar } : null;
 
   const changeForm = (field, value) => setForm(current => ({ ...current, [field]: value }));
+  const getRoleLabel = role => roleLabels[role] || role || 'Chưa cập nhật';
 
   const pickAvatar = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -65,12 +66,6 @@ const Profile = ({ navigation }) => {
     });
 
     if (!result.canceled) changeForm('avatar', result.assets[0]);
-  };
-
-  const getAvatarSource = () => {
-    if (form.avatar?.uri) return { uri: form.avatar.uri };
-    if (user?.avatar) return { uri: user.avatar };
-    return null;
   };
 
   const saveProfile = async () => {
@@ -99,7 +94,6 @@ const Profile = ({ navigation }) => {
       });
 
       dispatch({ type: 'LOGIN', payload: res.data });
-
       setIsEditing(false);
       Alert.alert('Thành công', 'Cập nhật hồ sơ thành công!');
     } catch (err) {
@@ -111,15 +105,7 @@ const Profile = ({ navigation }) => {
   };
 
   const cancelEdit = () => {
-    setForm({
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      role: user?.role || '',
-      avatar: null,
-    });
-
+    setForm(getFormData(user));
     setIsEditing(false);
   };
 
@@ -127,11 +113,7 @@ const Profile = ({ navigation }) => {
     try {
       await AsyncStorage.removeItem('access_token');
       dispatch({ type: 'LOGOUT' });
-
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      });
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (err) {
       console.log(err);
       Alert.alert('Lỗi', 'Đăng xuất thất bại!');
@@ -139,14 +121,11 @@ const Profile = ({ navigation }) => {
   };
 
   const handleTabPress = ({ route }) => {
-    const newIndex = routes.findIndex(r => r.key === route.key);
-    setIndex(newIndex);
+    setIndex(routes.findIndex(r => r.key === route.key));
 
     if (route.key === 'home') navigation.navigate('Home');
     if (route.key === 'account' || route.key === 'profile') navigation.navigate('Profile');
   };
-
-  const avatarSource = getAvatarSource();
 
   return (
     <View style={styles.profileContainer}>
@@ -167,24 +146,16 @@ const Profile = ({ navigation }) => {
                 <Card.Content>
                   <List.Item title="Họ và tên" description={fullName} left={props => <List.Icon {...props} icon="account" />} />
                   <Divider />
-
                   <List.Item title="Email" description={user?.email || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="email" />} />
                   <Divider />
-
                   <List.Item title="Số điện thoại" description={user?.phone || 'Chưa cập nhật'} left={props => <List.Icon {...props} icon="phone" />} />
                   <Divider />
-
                   <List.Item title="Vai trò" description={getRoleLabel(user?.role)} left={props => <List.Icon {...props} icon="account-badge" />} />
                 </Card.Content>
               </Card>
 
-              <Button mode="contained" icon="account-edit" style={styles.button} onPress={() => setIsEditing(true)}>
-                Chỉnh sửa hồ sơ
-              </Button>
-
-              <Button mode="outlined" icon="logout" style={styles.button} onPress={logout}>
-                Đăng xuất
-              </Button>
+              <Button mode="contained" icon="account-edit" style={styles.button} onPress={() => setIsEditing(true)}>Chỉnh sửa hồ sơ</Button>
+              <Button mode="outlined" icon="logout" style={styles.button} onPress={logout}>Đăng xuất</Button>
             </>
           ) : (
             <>
@@ -195,9 +166,7 @@ const Profile = ({ navigation }) => {
                   <View style={styles.avatarWrapper}>
                     {avatarSource ? <Avatar.Image size={90} source={avatarSource} /> : <Avatar.Text size={90} label={avatarLabel || 'U'} />}
 
-                    <Button mode="outlined" icon="camera" style={styles.avatarButton} onPress={pickAvatar}>
-                      Chọn ảnh đại diện
-                    </Button>
+                    <Button mode="outlined" icon="camera" style={styles.avatarButton} onPress={pickAvatar}>Chọn ảnh đại diện</Button>
                   </View>
 
                   <TextInput label="Họ" mode="outlined" value={form.first_name} style={styles.profileInput} onChangeText={text => changeForm('first_name', text)} />
@@ -208,13 +177,8 @@ const Profile = ({ navigation }) => {
                 </Card.Content>
               </Card>
 
-              <Button mode="contained" icon="content-save" style={styles.button} loading={loading} disabled={loading} onPress={saveProfile}>
-                Lưu hồ sơ
-              </Button>
-
-              <Button mode="outlined" icon="close" style={styles.button} disabled={loading} onPress={cancelEdit}>
-                Hủy
-              </Button>
+              <Button mode="contained" icon="content-save" style={styles.button} loading={loading} disabled={loading} onPress={saveProfile}>Lưu hồ sơ</Button>
+              <Button mode="outlined" icon="close" style={styles.button} disabled={loading} onPress={cancelEdit}>Hủy</Button>
             </>
           )}
         </View>

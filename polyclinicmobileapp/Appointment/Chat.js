@@ -1,159 +1,147 @@
-import React, { useContext, useEffect, useState } from 'react';
-
-import { View, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
-
-import { Text, TextInput, Button, Card } from 'react-native-paper';
-
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, ActivityIndicator, ScrollView } from 'react-native';
+import { Text, BottomNavigation, Button, Card, Dialog, Portal } from 'react-native-paper';
+import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { authApis, endpoints } from '../configs/Apis';
+import styles from './Styles';
+import Apis, { authApis, endpoints } from '../configs/Apis';
 
-import { MyUserContext } from '../configs/Contexts';
+const routes = [
+  { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
+  { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
+  { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
+  { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
+  { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
+];
 
-const Chat = ({ route, navigation }) => {
-    const { appointment } = route.params || {};
+const SelectSchedule = ({ route, navigation }) => {
+  const { specialty, doctor } = route.params || {};
 
-    const user = useContext(MyUserContext);
+  const [index, setIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [schedules, setSchedules] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [visible, setVisible] = useState(false);
 
-    const [messages, setMessages] = useState([]);
-    const [content, setContent] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [sending, setSending] = useState(false);
+  const getDoctorName = item => {
+    const fullName = `${item?.user?.last_name || ''} ${item?.user?.first_name || ''}`.trim();
+    return fullName ? `BS. ${fullName}` : item?.user?.username || 'Bác sĩ';
+  };
 
-    const loadMessages = async () => {
-        try {
-            setLoading(true);
+  const loadSchedules = async () => {
+    try {
+      setLoading(true);
+      const res = await Apis.get(endpoints['work-schedules']);
+      setSchedules(res.data.filter(item => item.staff_profile?.id === doctor.id && item.active !== false));
+    } catch (ex) {
+      console.log('Lỗi load lịch làm việc:', ex);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const token = await AsyncStorage.getItem('access_token');
+  useEffect(() => { loadSchedules(); }, []);
 
-            if (!token) return navigation.navigate('Login');
+  const handleSelectDate = day => {
+    setSelectedDate(day.dateString);
+    setSelectedSchedule(schedules.find(item => item.date === day.dateString) || null);
+    setSelectedSlot(null);
+  };
 
-            const res = await authApis(token).get(endpoints['appointment-messages'](appointment.id));
+  const bookAppointment = async () => {
+    try {
+      setBooking(true);
 
-            setMessages(res.data);
-        }
-        catch (ex) {
-            console.log('Lỗi load tin nhắn:', ex.response?.data || ex);
-        }
-        finally {
-            setLoading(false);
-        }
-    };
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) return navigation.navigate('Login');
 
-    const sendMessage = async () => {
-        if (!content.trim()) return;
+      await authApis(token).post(endpoints['appointments'], { time_slot: selectedSlot.id, services: [] });
+      setVisible(true);
+    } catch (ex) {
+      console.log('Lỗi đặt lịch:', ex.response?.data || ex);
+    } finally {
+      setBooking(false);
+    }
+  };
 
-        try {
-            setSending(true);
+  const handleTabPress = ({ route }) => {
+    setIndex(routes.findIndex(r => r.key === route.key));
 
-            const token = await AsyncStorage.getItem('access_token');
+    if (route.key === 'home') navigation.navigate('Home');
+    if (route.key === 'account') navigation.navigate('Profile');
+  };
 
-            if (!token) return navigation.navigate('Login');
+  const markedDates = schedules.reduce((result, item) => ({ ...result, [item.date]: { marked: true, dotColor: 'teal' } }), {});
+  if (selectedDate) markedDates[selectedDate] = { ...markedDates[selectedDate], selected: true, selectedColor: 'teal' };
 
-            await authApis(token).post(endpoints['appointment-messages'](appointment.id), { content });
+  const timeSlots = selectedSchedule?.time_slots?.filter(item => item.active !== false) || [];
 
-            setContent('');
+  return (
+    <View style={styles.root}>
+      <ScrollView style={styles.root} contentContainerStyle={styles.scheduleContent}>
+        <Card style={styles.infoCard}>
+          <Card.Content>
+            <Text variant="titleMedium">Thông tin đặt lịch</Text>
+            <Text>Chuyên khoa: {specialty?.name}</Text>
+            <Text>Bác sĩ: {getDoctorName(doctor)}</Text>
+            <Text>Phí khám: {doctor?.fee ? `${doctor.fee} VNĐ` : 'Chưa cập nhật'}</Text>
+          </Card.Content>
+        </Card>
 
-            loadMessages();
-        }
-        catch (ex) {
-            console.log('Lỗi gửi tin nhắn:', ex.response?.data || ex);
-        }
-        finally {
-            setSending(false);
-        }
-    };
+        <Text variant="titleMedium" style={styles.sectionTitle}>Chọn ngày khám</Text>
 
-    useEffect(() => {
-        if (appointment?.id) loadMessages();
-    }, [appointment]);
-    const isMyMessage = (item) => {
-        if (item.sender === user?.id) return true;
-        if (item.sender?.id === user?.id) return true;
-        return false;
-    };
+        {loading ? (
+          <ActivityIndicator size="large" style={styles.loading} />
+        ) : (
+          <>
+            <Calendar onDayPress={handleSelectDate} markedDates={markedDates} />
 
-    const renderItem = ({ item }) => {
-        const mine = isMyMessage(item);
+            {selectedDate ? (
+              <View style={styles.timeSlotWrapper}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>Khung giờ ngày {selectedDate}</Text>
 
-        return (
-            <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
-                <View style={{
-                    maxWidth: '78%',
-                    padding: 10,
-                    borderRadius: 12,
-                    backgroundColor: mine ? '#1976D2' : '#e0e0e0'
-                }}>
-                    {!mine && <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 2 }}>{item.sender_name || 'Bác sĩ'}</Text>}
-
-                    <Text style={{ color: mine ? 'white' : 'black' }}>{item.content}</Text>
-
-                    {item.created_date && (
-                        <Text style={{
-                            fontSize: 10,
-                            marginTop: 4,
-                            textAlign: 'right',
-                            color: mine ? '#eeeeee' : '#555'
-                        }}>
-                            {String(item.created_date).slice(11, 16)}
-                        </Text>
+                {timeSlots.length === 0 ? (
+                  <Text style={styles.emptySmallText}>Ngày này chưa có khung giờ khám</Text>
+                ) : (
+                  <FlatList
+                    data={timeSlots}
+                    numColumns={2}
+                    scrollEnabled={false}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({ item }) => (
+                      <Button mode={selectedSlot?.id === item.id ? 'contained' : 'outlined'} style={styles.slotButton} onPress={() => setSelectedSlot(item)}>
+                        {item.start_time} - {item.end_time}
+                      </Button>
                     )}
-                </View>
-            </View>
-        );
-    };
-
-    if (!appointment) {
-    return (
-        <View style={{ flex: 1, padding: 12, justifyContent: 'center' }}>
-            <Text style={{ textAlign: 'center', marginBottom: 12 }}>
-                Vui lòng chọn lịch hẹn trước khi tư vấn.
-            </Text>
-
-            <Button mode="contained" onPress={() => navigation.navigate('MyAppointment')}>
-                Chọn lịch hẹn
-            </Button>
-        </View>
-    );
-}
-
-    return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            <View style={{ flex: 1, padding: 12, backgroundColor: '#f5f5f5' }}>
-                <Card style={{ marginBottom: 10 }}>
-                    <Card.Content>
-                        <Text variant="titleMedium">Lịch hẹn #{appointment.id}</Text>
-                        <Text>Bác sĩ: {appointment.doctor_name || '--'}</Text>
-                        <Text>Trạng thái: {appointment.status || '--'}</Text>
-                    </Card.Content>
-                </Card>
-
-                {loading ? <ActivityIndicator size="large" style={{ marginTop: 20 }} /> : (
-                    <FlatList
-                        data={messages}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={renderItem}
-                        contentContainerStyle={{ paddingBottom: 10 }}
-                        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Chưa có tin nhắn</Text>}
-                    />
+                  />
                 )}
+              </View>
+            ) : (
+              <Text style={styles.emptyDateText}>Vui lòng chọn ngày có dấu chấm</Text>
+            )}
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-                    <TextInput
-                        mode="outlined"
-                        value={content}
-                        placeholder="Nhập tin nhắn..."
-                        onChangeText={setContent}
-                        style={{ flex: 1, backgroundColor: 'white' }}
-                    />
+            <Button mode="contained" style={styles.confirmButton} disabled={!selectedSlot || booking} loading={booking} onPress={bookAppointment}>Đặt lịch</Button>
+          </>
+        )}
+      </ScrollView>
 
-                    <Button mode="contained" loading={sending} disabled={sending} onPress={sendMessage} style={{ marginLeft: 8 }}>
-                        Gửi
-                    </Button>
-                </View>
-            </View>
-        </KeyboardAvoidingView>
-    );
+      <Portal>
+        <Dialog visible={visible} onDismiss={() => setVisible(false)}>
+          <Dialog.Title>Thông báo</Dialog.Title>
+          <Dialog.Content><Text>Đặt lịch thành công!</Text></Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => { setVisible(false); navigation.navigate('Home'); }}>Hoàn tất</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} />
+    </View>
+  );
 };
 
-export default Chat;
+export default SelectSchedule;

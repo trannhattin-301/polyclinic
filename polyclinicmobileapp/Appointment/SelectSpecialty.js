@@ -33,29 +33,29 @@ const SelectSpecialty = ({ navigation }) => {
 
   useEffect(() => { loadSpecialties(); }, []);
 
-  const filteredSpecialties = specialties.filter(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-
   const handleTabPress = ({ route }) => {
-    const newIndex = routes.findIndex(r => r.key === route.key);
-    setIndex(newIndex);
+    setIndex(routes.findIndex(r => r.key === route.key));
+
     if (route.key === 'home') navigation.navigate('Home');
     if (route.key === 'account') navigation.navigate('Profile');
   };
 
+  const filteredSpecialties = specialties.filter(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
-    <View style={{ flex: 1 }}>
-      <Searchbar placeholder="Tìm chuyên khoa" onChangeText={setSearchQuery} value={searchQuery} style={styles.searchBar} inputStyle={styles.searchInput} />
+    <View style={styles.root}>
+      <Searchbar placeholder="Tìm chuyên khoa" value={searchQuery} onChangeText={setSearchQuery} style={styles.searchBar} inputStyle={styles.searchInput} />
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" style={styles.loading} />
       ) : (
         <FlatList
           data={filteredSpecialties}
           keyExtractor={item => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 10 }}
-          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có chuyên khoa</Text>}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<Text style={styles.emptyText}>Không có chuyên khoa</Text>}
           renderItem={({ item }) => (
-            <Card style={{ marginHorizontal: 10, marginVertical: 6 }} onPress={() => navigation.navigate('SelectDoctor', { specialty: item })}>
+            <Card style={styles.listCard} onPress={() => navigation.navigate('SelectDoctor', { specialty: item })}>
               <Card.Title title={item.name} subtitle={item.description} />
             </Card>
           )}

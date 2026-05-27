@@ -1,9 +1,10 @@
 import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
+  // All, Login, Register
   container: {
     flexGrow: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'whitesmoke',
     padding: 24,
     justifyContent: 'center',
   },
@@ -13,12 +14,12 @@ export default StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 24,
-    color: '#333',
+    color: 'dimgray',
   },
 
   input: {
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
 
   button: {
@@ -32,12 +33,12 @@ export default StyleSheet.create({
   },
 
   linkText: {
-    color: '#2563EB',
+    color: 'blue',
     fontSize: 14,
   },
 
   header: {
-    backgroundColor: '#1E88E5',
+    backgroundColor: 'dodgerblue',
     paddingTop: 50,
     paddingBottom: 24,
     alignItems: 'center',
@@ -45,19 +46,19 @@ export default StyleSheet.create({
   },
 
   name: {
-    color: '#fff',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
 
   email: {
-    color: 'rgba(255,255,255,0.8)',
+    color: 'white',
     fontSize: 13,
   },
 
   content: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'whitesmoke',
     padding: 16,
   },
 
@@ -72,9 +73,10 @@ export default StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
   },
+
   profileContainer: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'whitesmoke',
   },
 
   scrollContainer: {
@@ -84,7 +86,7 @@ export default StyleSheet.create({
 
   profileInput: {
     marginBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
 
   avatarWrapper: {
@@ -97,4 +99,28 @@ export default StyleSheet.create({
     marginTop: 4,
   },
 
+  // Account
+    primaryButton: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
+  outlineButton: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
+  dangerButton: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+
+  // Profile
+    root: {
+    flex: 1,
+  },
+
+  flexScroll: {
+    flexGrow: 1,
+  },
 });

@@ -1,12 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, RefreshControl } from 'react-native';
-import { Text, Card, ActivityIndicator } from 'react-native-paper';
+import { Text, Card, ActivityIndicator, BottomNavigation } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Apis, { authApis, endpoints } from '../../configs/Apis';
+import styles from './Styles';
 
-const Notifications = () => {
+const Notifications = ({ navigation }) => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [index, setIndex] = useState(3);
+
+    const [routes] = useState([
+        { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
+        { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
+        { key: 'profile', title: 'Hồ sơ', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
+        { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
+        { key: 'account', title: 'Tài khoản', focusedIcon: 'cog', unfocusedIcon: 'cog-outline' },
+    ]);
+
+    const handleTabPress = ({ route }) => {
+        const screens = { home: 'Home', schedule: 'MyAppointment', profile: 'Profile', notifications: 'Notifications', account: 'Account' };
+        setIndex(routes.findIndex(r => r.key === route.key));
+        navigation.navigate(screens[route.key]);
+    };
 
     const getTitle = (status) => {
         if (status === 'pending') return 'Đặt lịch thành công';
@@ -36,13 +52,7 @@ const Notifications = () => {
             let res = await authApis(token).get(endpoints['appointments']);
             let data = res.data.results ? res.data.results : res.data;
 
-            let list = data.map(a => ({
-                id: `appointment-${a.id}`,
-                title: getTitle(a.status),
-                content: getContent(a.status),
-                created_date: a.created_date,
-                status: a.status
-            }));
+            let list = data.map(a => ({ id: `appointment-${a.id}`, title: getTitle(a.status), content: getContent(a.status), created_date: a.created_date, status: a.status }));
 
             let messageList = [];
 
@@ -55,13 +65,7 @@ const Notifications = () => {
                         let lastMsg = messages[messages.length - 1];
 
                         if (lastMsg.sender !== currentUser.id) {
-                            messageList.push({
-                                id: `message-${lastMsg.id}`,
-                                title: 'Có tin nhắn mới',
-                                content: `${lastMsg.sender_name || 'Bác sĩ'} vừa gửi tin nhắn cho bạn.`,
-                                created_date: lastMsg.created_date,
-                                status: 'message'
-                            });
+                            messageList.push({ id: `message-${lastMsg.id}`, title: 'Có tin nhắn mới', content: `${lastMsg.sender_name || 'Bác sĩ'} vừa gửi tin nhắn cho bạn.`, created_date: lastMsg.created_date, status: 'message' });
                         }
                     }
                 } catch (err) {
@@ -82,26 +86,19 @@ const Notifications = () => {
     }, []);
 
     const renderItem = ({ item }) => (
-        <Card style={{ margin: 10, padding: 5 }}>
+        <Card style={styles.card}>
             <Card.Content>
-                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.title}</Text>
-                <Text style={{ marginTop: 5 }}>{item.content}</Text>
-                <Text style={{ marginTop: 5, color: 'gray' }}>Trạng thái: {item.status}</Text>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.content}>{item.content}</Text>
+                <Text style={styles.status}>Trạng thái: {item.status}</Text>
             </Card.Content>
         </Card>
     );
 
-    if (loading) return <ActivityIndicator style={{ marginTop: 30 }} />;
-
     return (
-        <View style={{ flex: 1 }}>
-            <FlatList
-                data={notifications}
-                keyExtractor={item => item.id}
-                renderItem={renderItem}
-                refreshControl={<RefreshControl refreshing={loading} onRefresh={loadNotifications} />}
-                ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 30 }}>Chưa có thông báo</Text>}
-            />
+        <View style={styles.container}>
+            {loading ? <ActivityIndicator style={styles.loading} /> : <FlatList data={notifications} keyExtractor={item => item.id} renderItem={renderItem} refreshControl={<RefreshControl refreshing={loading} onRefresh={loadNotifications} />} ListEmptyComponent={<Text style={styles.emptyText}>Chưa có thông báo</Text>} />}
+            <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} />
         </View>
     );
 };

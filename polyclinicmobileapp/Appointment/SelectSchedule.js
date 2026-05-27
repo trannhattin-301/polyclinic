@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, ActivityIndicator, ScrollView  } from 'react-native';
+import { View, FlatList, ActivityIndicator, ScrollView } from 'react-native';
 import { Text, BottomNavigation, Button, Card, Dialog, Portal } from 'react-native-paper';
 import { Calendar } from 'react-native-calendars';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import styles from './Styles';
 import Apis, { authApis, endpoints } from '../configs/Apis';
 
 const routes = [
@@ -16,6 +17,7 @@ const routes = [
 
 const SelectSchedule = ({ route, navigation }) => {
   const { specialty, doctor } = route.params || {};
+
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [booking, setBooking] = useState(false);
@@ -45,52 +47,43 @@ const SelectSchedule = ({ route, navigation }) => {
   useEffect(() => { loadSchedules(); }, []);
 
   const handleSelectDate = day => {
-    const date = day.dateString;
-    setSelectedDate(date);
-    setSelectedSchedule(schedules.find(item => item.date === date) || null);
+    setSelectedDate(day.dateString);
+    setSelectedSchedule(schedules.find(item => item.date === day.dateString) || null);
     setSelectedSlot(null);
   };
 
-const bookAppointment = async () => {
-  try {
-    setBooking(true);
+  const bookAppointment = async () => {
+    try {
+      setBooking(true);
 
-    const token = await AsyncStorage.getItem('access_token');
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) return navigation.navigate('Login');
 
-    if (!token) {
-      navigation.navigate('Login');
-      return;
+      await authApis(token).post(endpoints['appointments'], { time_slot: selectedSlot.id, services: [] });
+      setVisible(true);
+    } catch (ex) {
+      console.log('Lỗi đặt lịch:', ex.response?.data || ex);
+    } finally {
+      setBooking(false);
     }
-
-    await authApis(token).post(endpoints['appointments'], {
-      time_slot: selectedSlot.id,
-      services: [],
-    });
-
-    setVisible(true);
-  } catch (ex) {
-    console.log('Lỗi đặt lịch:', ex.response?.data || ex);
-  } finally {
-    setBooking(false);
-  }
-};
+  };
 
   const handleTabPress = ({ route }) => {
-    const newIndex = routes.findIndex(r => r.key === route.key);
-    setIndex(newIndex);
+    setIndex(routes.findIndex(r => r.key === route.key));
+
     if (route.key === 'home') navigation.navigate('Home');
     if (route.key === 'account') navigation.navigate('Profile');
   };
 
-  const markedDates = schedules.reduce((result, item) => ({ ...result, [item.date]: { marked: true, dotColor: '#00897B' } }), {});
-  if (selectedDate) markedDates[selectedDate] = { ...markedDates[selectedDate], selected: true, selectedColor: '#00897B' };
+  const markedDates = schedules.reduce((result, item) => ({ ...result, [item.date]: { marked: true, dotColor: 'teal' } }), {});
+  if (selectedDate) markedDates[selectedDate] = { ...markedDates[selectedDate], selected: true, selectedColor: 'teal' };
 
   const timeSlots = selectedSchedule?.time_slots?.filter(item => item.active !== false) || [];
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10, paddingBottom: 30 }}>
-        <Card style={{ marginBottom: 15 }}>
+    <View style={styles.root}>
+      <ScrollView style={styles.root} contentContainerStyle={styles.scheduleContent}>
+        <Card style={styles.infoCard}>
           <Card.Content>
             <Text variant="titleMedium">Thông tin đặt lịch</Text>
             <Text>Chuyên khoa: {specialty?.name}</Text>
@@ -99,28 +92,28 @@ const bookAppointment = async () => {
           </Card.Content>
         </Card>
 
-        <Text variant="titleMedium" style={{ marginBottom: 10 }}>Chọn ngày khám</Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Chọn ngày khám</Text>
 
         {loading ? (
-          <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+          <ActivityIndicator size="large" style={styles.loading} />
         ) : (
           <>
             <Calendar onDayPress={handleSelectDate} markedDates={markedDates} />
 
             {selectedDate ? (
-              <View style={{ marginTop: 15 }}>
-                <Text variant="titleMedium" style={{ marginBottom: 10 }}>Khung giờ ngày {selectedDate}</Text>
+              <View style={styles.timeSlotWrapper}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>Khung giờ ngày {selectedDate}</Text>
 
                 {timeSlots.length === 0 ? (
-                  <Text style={{ textAlign: 'center', marginTop: 10 }}>Ngày này chưa có khung giờ khám</Text>
+                  <Text style={styles.emptySmallText}>Ngày này chưa có khung giờ khám</Text>
                 ) : (
                   <FlatList
                     data={timeSlots}
-                    keyExtractor={item => item.id.toString()}
                     numColumns={2}
                     scrollEnabled={false}
+                    keyExtractor={item => item.id.toString()}
                     renderItem={({ item }) => (
-                      <Button mode={selectedSlot?.id === item.id ? 'contained' : 'outlined'} style={{ flex: 1, margin: 5 }} onPress={() => setSelectedSlot(item)}>
+                      <Button mode={selectedSlot?.id === item.id ? 'contained' : 'outlined'} style={styles.slotButton} onPress={() => setSelectedSlot(item)}>
                         {item.start_time} - {item.end_time}
                       </Button>
                     )}
@@ -128,10 +121,10 @@ const bookAppointment = async () => {
                 )}
               </View>
             ) : (
-              <Text style={{ textAlign: 'center', marginTop: 15 }}>Vui lòng chọn ngày có dấu chấm</Text>
+              <Text style={styles.emptyDateText}>Vui lòng chọn ngày có dấu chấm</Text>
             )}
 
-            <Button mode="contained" style={{ marginTop: 20 }} disabled={!selectedSlot || booking} loading={booking} onPress={bookAppointment}>Đặt lịch</Button>
+            <Button mode="contained" style={styles.confirmButton} disabled={!selectedSlot || booking} loading={booking} onPress={bookAppointment}>Đặt lịch</Button>
           </>
         )}
       </ScrollView>

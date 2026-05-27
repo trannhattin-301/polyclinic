@@ -7,41 +7,49 @@ import styles from './Styles';
 import { MyUserContext, MyDispatchContext } from '../../configs/Contexts';
 import { endpoints, authApis } from '../../configs/Apis';
 
-const HomeRoute = () => <Text>Trang chủ</Text>;
-const ScheduleRoute = () => <Text>Lịch hẹn</Text>;
-const ProfileRoute = () => <Text>Hồ sơ</Text>;
-const NotificationsRoute = () => <Text>Thông báo</Text>;
-const AccountRoute = () => <Text>Tài khoản</Text>;
+const routes = [
+  { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
+  { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
+  { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
+  { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
+  { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
+];
+
+const emptyForm = {
+  first_name: '',
+  last_name: '',
+  dob: '',
+  gender: '',
+  blood_group: '',
+  insurance_number: '',
+  insurance_expiry_date: '',
+  height: '',
+  weight: '',
+  allergy_history: '',
+};
 
 const Profile = ({ navigation }) => {
   const user = useContext(MyUserContext);
   const dispatch = useContext(MyDispatchContext);
 
   const [index, setIndex] = useState(2);
-  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [patientProfile, setPatientProfile] = useState(null);
 
-  const [form, setForm] = useState({
-    first_name: '', last_name: '', dob: '', gender: '', blood_group: '',
-    insurance_number: '', insurance_expiry_date: '', height: '', weight: '', allergy_history: '',
+  const getFormData = profile => ({
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+    dob: user?.dob || '',
+    gender: user?.gender || '',
+    blood_group: profile?.blood_group || '',
+    insurance_number: profile?.insurance_number || '',
+    insurance_expiry_date: profile?.insurance_expiry_date || '',
+    height: profile?.height ? String(profile.height) : '',
+    weight: profile?.weight ? String(profile.weight) : '',
+    allergy_history: profile?.allergy_history || '',
   });
-
-  const [routes] = useState([
-    { key: 'home', title: 'Trang chủ', focusedIcon: 'home', unfocusedIcon: 'home-outline' },
-    { key: 'schedule', title: 'Lịch hẹn', focusedIcon: 'calendar', unfocusedIcon: 'calendar-outline' },
-    { key: 'profile', title: 'Hồ sơ', focusedIcon: 'file-document', unfocusedIcon: 'file-document-outline' },
-    { key: 'notifications', title: 'Thông báo', focusedIcon: 'bell', unfocusedIcon: 'bell-outline' },
-    { key: 'account', title: 'Tài khoản', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
-  ]);
-
-    const renderScene = BottomNavigation.SceneMap({
-        home: HomeRoute,
-        schedule: ScheduleRoute,
-        profile: ProfileRoute,
-        notifications: NotificationsRoute,
-        account: AccountRoute,
-    });
 
   const getGenderLabel = gender => {
     if (gender === 'male') return 'Nam';
@@ -58,33 +66,13 @@ const Profile = ({ navigation }) => {
       const res = await authApis(token).get(endpoints['patient-profile']);
 
       setPatientProfile(res.data);
-
-      setForm({
-        first_name: user?.first_name || '',
-        last_name: user?.last_name || '',
-        dob: user?.dob || '',
-        gender: user?.gender || '',
-        blood_group: res.data?.blood_group || '',
-        insurance_number: res.data?.insurance_number || '',
-        insurance_expiry_date: res.data?.insurance_expiry_date || '',
-        height: res.data?.height ? String(res.data.height) : '',
-        weight: res.data?.weight ? String(res.data.weight) : '',
-        allergy_history: res.data?.allergy_history || '',
-      });
+      setForm(getFormData(res.data));
     } catch (err) {
       console.log(err?.response?.data || err);
     }
   };
 
   useEffect(() => {
-    setForm(current => ({
-      ...current,
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      dob: user?.dob || '',
-      gender: user?.gender || '',
-    }));
-
     loadPatientProfile();
   }, [user]);
 
@@ -128,25 +116,12 @@ const Profile = ({ navigation }) => {
   };
 
   const cancelEdit = () => {
-    setForm({
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      dob: user?.dob || '',
-      gender: user?.gender || '',
-      blood_group: patientProfile?.blood_group || '',
-      insurance_number: patientProfile?.insurance_number || '',
-      insurance_expiry_date: patientProfile?.insurance_expiry_date || '',
-      height: patientProfile?.height ? String(patientProfile.height) : '',
-      weight: patientProfile?.weight ? String(patientProfile.weight) : '',
-      allergy_history: patientProfile?.allergy_history || '',
-    });
-
+    setForm(getFormData(patientProfile));
     setIsEditing(false);
   };
 
   const handleTabPress = ({ route }) => {
-    const newIndex = routes.findIndex(r => r.key === route.key);
-    setIndex(newIndex);
+    setIndex(routes.findIndex(r => r.key === route.key));
 
     if (route.key === 'home') navigation.navigate('Home');
     if (route.key === 'schedule') navigation.navigate('MyAppointment');
@@ -157,8 +132,8 @@ const Profile = ({ navigation }) => {
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Chưa cập nhật';
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <View style={styles.root}>
+      <ScrollView contentContainerStyle={styles.flexScroll}>
         <View style={styles.content}>
           <Card style={styles.card}>
             <Card.Title title="Hồ sơ bệnh nhân" subtitle="Thông tin cá nhân và y tế" />
@@ -202,12 +177,11 @@ const Profile = ({ navigation }) => {
                 <Button mode="outlined" style={styles.button} onPress={cancelEdit}>Hủy</Button>
               </View>
             )}
-
           </Card>
         </View>
       </ScrollView>
 
-            <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} renderScene={renderScene} />
+      <BottomNavigation.Bar navigationState={{ index, routes }} onTabPress={handleTabPress} />
     </View>
   );
 };

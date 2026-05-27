@@ -20,6 +20,11 @@ const SelectDoctor = ({ route, navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const getDoctorName = item => {
+    const fullName = `${item.user?.last_name || ''} ${item.user?.first_name || ''}`.trim();
+    return fullName ? `BS. ${fullName}` : item.user?.username || 'Bác sĩ';
+  };
+
   const loadDoctors = async () => {
     try {
       setLoading(true);
@@ -35,36 +40,31 @@ const SelectDoctor = ({ route, navigation }) => {
 
   useEffect(() => { loadDoctors(); }, []);
 
-  const getDoctorName = item => {
-    const fullName = `${item.user?.last_name || ''} ${item.user?.first_name || ''}`.trim();
-    return fullName ? `BS. ${fullName}` : item.user?.username || 'Bác sĩ';
-  };
-
-  const filteredDoctors = doctors.filter(item => getDoctorName(item).toLowerCase().includes(searchQuery.toLowerCase()));
-
   const handleTabPress = ({ route }) => {
-    const newIndex = routes.findIndex(r => r.key === route.key);
-    setIndex(newIndex);
+    setIndex(routes.findIndex(r => r.key === route.key));
+
     if (route.key === 'home') navigation.navigate('Home');
     if (route.key === 'account') navigation.navigate('Profile');
   };
 
-  return (
-    <View style={{ flex: 1 }}>
-      <Text variant="titleMedium" style={{ margin: 10 }}>Chuyên khoa: {specialty.name}</Text>
+  const filteredDoctors = doctors.filter(item => getDoctorName(item).toLowerCase().includes(searchQuery.toLowerCase()));
 
-      <Searchbar placeholder="Tìm bác sĩ" onChangeText={setSearchQuery} value={searchQuery} style={styles.searchBar} inputStyle={styles.searchInput} />
+  return (
+    <View style={styles.root}>
+      <Text variant="titleMedium" style={styles.screenTitle}>Chuyên khoa: {specialty.name}</Text>
+
+      <Searchbar placeholder="Tìm bác sĩ" value={searchQuery} onChangeText={setSearchQuery} style={styles.searchBar} inputStyle={styles.searchInput} />
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="large" style={styles.loading} />
       ) : (
         <FlatList
           data={filteredDoctors}
           keyExtractor={item => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 10 }}
-          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có bác sĩ thuộc chuyên khoa này</Text>}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={<Text style={styles.emptyText}>Không có bác sĩ thuộc chuyên khoa này</Text>}
           renderItem={({ item }) => (
-            <Card style={{ marginHorizontal: 10, marginVertical: 6 }} onPress={() => navigation.navigate('SelectSchedule', { specialty, doctor: item })}>
+            <Card style={styles.listCard} onPress={() => navigation.navigate('SelectSchedule', { specialty, doctor: item })}>
               <Card.Title
                 title={getDoctorName(item)}
                 subtitle={`${item.degree || 'Bác sĩ'} • ${item.experience || 0} năm kinh nghiệm`}

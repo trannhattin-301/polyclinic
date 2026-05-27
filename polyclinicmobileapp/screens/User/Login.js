@@ -8,8 +8,8 @@ import styles from './Styles';
 import Apis, { endpoints, authApis } from '../../configs/Apis';
 import { MyDispatchContext } from '../../configs/Contexts';
 
-const CLIENT_ID = '42kqtXSm0XIZHk5Qy7drK5kfQ0BnHo6vpjK8G0xq';
-const CLIENT_SECRET = '5hTrEobTbiCFQsIjaFi8a0AGBG1GEfwheKpfltusGedzogbIdgo59k5TH7RJ9XOHLZRcYg1RvJwZQ7dgnXBEVIqvzWkc5uXRe8KJq9Ui9A3FDHyD50QaStng1KfLShDG';
+const CLIENT_ID = 'q0HDNWb5oJl8A43PWAdeROTsKb2UXf6L7gmliQ7O';
+const CLIENT_SECRET = 'pB2Mbo0DUM81Vjs2k4HP9WNX621UCtx8Jbp2v8yH2kDwG62Ua0U6U5kjoqDGOUvdwxXOX6tvzFhYJ6jnHbDhBBCo0HBjcJ6cXHirz50PiQjArWAeam34HwoUIZ6haEUM';
 
 const userInfo = [
   { field: 'username', label: 'Tên đăng nhập', icon: 'account' },
@@ -25,12 +25,11 @@ const Login = () => {
   const dispatch = useContext(MyDispatchContext);
 
   const validate = () => {
-    for (let i of userInfo) {
+    for (let i of userInfo)
       if (!user[i.field]) {
         setErr(`Vui lòng nhập ${i.label}!`);
         return false;
       }
-    }
 
     return true;
   };
@@ -49,6 +48,7 @@ const Login = () => {
       form.append('client_id', CLIENT_ID);
       form.append('client_secret', CLIENT_SECRET);
 
+
       const res = await Apis.post(endpoints.login, form.toString(), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
@@ -61,12 +61,13 @@ const Login = () => {
 
       console.log('Current user:', currentUser.data);
 
-      if (currentUser.data.role === 'doctor')
+      if (currentUser.data.role === 'admin') {
+        navigation.navigate('AdminReport');
+      } else if (['doctor', 'nurse'].includes(currentUser.data.role)) {
         navigation.navigate('DoctorHome');
-      else if (currentUser.data.role === 'nurse')
-        navigation.navigate('DoctorHome');
-      else
+      } else {
         navigation.navigate('Home');
+      }
     } catch (ex) {
       console.log('Lỗi đăng nhập:', ex.response?.data || ex.message);
 
@@ -81,7 +82,6 @@ const Login = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Đăng nhập</Text>
-
       <HelperText type="error" visible={!!err}>{err}</HelperText>
 
       {userInfo.map(i => (
@@ -91,7 +91,6 @@ const Login = () => {
           value={user[i.field] || ''}
           onChangeText={t => setUser({ ...user, [i.field]: t })}
           secureTextEntry={!!i.secureTextEntry}
-          keyboardType={i.keyboardType || 'default'}
           autoCapitalize="none"
           mode="outlined"
           style={styles.input}

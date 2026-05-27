@@ -32,6 +32,8 @@ import DoctorPrescriptionDetail from './screens/Doctor/DoctorPrescriptionDetail'
 import PatientPrescriptions from './screens/Patient/PatientPrescriptions';
 import PatientPrescriptionDetail from './screens/Patient/PatientPrescriptionDetail';
 
+import AdminReport from './screens/Admin/AdminReport';
+
 import { MyUserContext, MyDispatchContext } from './configs/Contexts';
 import { MyUserReducer } from './reducers/reducers';
 
@@ -77,6 +79,9 @@ export default function App() {
               
               <Stack.Screen name="PatientPrescriptions" component={PatientPrescriptions} options={{ headerShown: true, title: 'Đơn thuốc của tôi' }} />
               <Stack.Screen name="PatientPrescriptionDetail" component={PatientPrescriptionDetail} options={{ headerShown: true, title: 'Chi tiết đơn thuốc' }} />
+
+              <Stack.Screen name="AdminReport" component={AdminReport} options={{ headerShown: true, title: 'Báo cáo thống kê' }} />
+
             </Stack.Navigator>
           </NavigationContainer>
         </MyDispatchContext.Provider>

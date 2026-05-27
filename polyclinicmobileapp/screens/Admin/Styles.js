@@ -4,7 +4,7 @@ export default StyleSheet.create({
     container: {
         flex: 1,
         padding: 12,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: 'whitesmoke',
     },
 
     center: {
@@ -43,7 +43,7 @@ export default StyleSheet.create({
 
     cardTitle: {
         fontSize: 15,
-        color: '#555',
+        color: 'dimgray',
     },
 
     cardNumber: {
@@ -71,9 +71,10 @@ export default StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
     },
+
     logoutButton: {
-    marginTop: 16,
-    marginBottom: 24,
-    borderRadius: 8,
-},
+        marginTop: 16,
+        marginBottom: 24,
+        borderRadius: 8,
+    },
 });
