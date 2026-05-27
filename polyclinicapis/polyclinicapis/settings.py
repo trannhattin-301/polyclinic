@@ -84,7 +84,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'polyclinic_db',
         'USER': 'root',
-        'PASSWORD': 'admin123',
+        'PASSWORD': 'thanhnh05@',
         'HOST': ''
     }
 }

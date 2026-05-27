@@ -195,10 +195,13 @@ for item in medicines:
     else:
         print(f"Khong tim thay danh muc thuoc: {item['category']}")
 
-# Seed data cho schedule,
-# WorkSchedule: 5 bac si x 7 ngay = 35
-# TimeSlot: 5 bac si x 7 ngay x 11 khung gio = 385 dong
-today = date.today()
+# Seed data cho schedule
+# Tao lich tu 27/05/2026 den 05/06/2026
+# Khong xoa lich cu, khong xoa appointment cu
+# Neu ngay da co WorkSchedule nhung thieu TimeSlot thi tu bo sung
+
+start_date = date(2026, 5, 27)
+end_date = date(2026, 6, 5)
 
 TIME_SLOTS = [
     (time(7, 30), time(8, 0)),
@@ -214,14 +217,41 @@ TIME_SLOTS = [
     (time(15, 0), time(15, 30)),
     (time(15, 30), time(16, 0)),
 ]
+
+total_days = (end_date - start_date).days + 1
+
 for staff in StaffProfile.objects.filter(active=True):
-    for i in range(7):
-        work_schedule, created = WorkSchedule.objects.get_or_create(staff_profile=staff, date=today + timedelta(days=i), defaults={"active": True})
+    for i in range(total_days):
+        current_date = start_date + timedelta(days=i)
+
+        work_schedule, created = WorkSchedule.objects.get_or_create(
+            staff_profile=staff,
+            date=current_date,
+            defaults={"active": True}
+        )
+
+        # Neu lich da ton tai nhung dang bi tat thi bat lai
+        if not work_schedule.active:
+            work_schedule.active = True
+            work_schedule.save()
 
         for start, end in TIME_SLOTS:
-            TimeSlot.objects.get_or_create(work_schedule=work_schedule, start_time=start, defaults={"end_time": end, "status": TimeSlot.Status.AVAILABLE, "active": True})
+            slot, created = TimeSlot.objects.get_or_create(
+                work_schedule=work_schedule,
+                start_time=start,
+                defaults={
+                    "end_time": end,
+                    "status": TimeSlot.Status.AVAILABLE,
+                    "active": True
+                }
+            )
+
+            # Neu khung gio da ton tai nhung dang bi tat thi bat lai
+            if not slot.active:
+                slot.active = True
+                slot.save()
 
 
 print("Da chen du lieu mau thanh cong!")
-client_id:R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl
-client_secret:M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT
+# client_id:R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl
+# client_secret:M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT
