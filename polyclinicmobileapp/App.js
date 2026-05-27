@@ -29,6 +29,9 @@ import DoctorScheduleManagement from './screens/Doctor/DoctorScheduleManagement'
 import DoctorMedicalRecordCreate from './screens/Doctor/DoctorMedicalRecordCreate';
 import DoctorPrescriptionDetail from './screens/Doctor/DoctorPrescriptionDetail';
 
+import PatientPrescriptions from './screens/Patient/PatientPrescriptions';
+import PatientPrescriptionDetail from './screens/Patient/PatientPrescriptionDetail';
+
 import { MyUserContext, MyDispatchContext } from './configs/Contexts';
 import { MyUserReducer } from './reducers/reducers';
 
@@ -71,7 +74,9 @@ export default function App() {
               <Stack.Screen name="DoctorScheduleManagement" component={DoctorScheduleManagement} options={{ title: 'Lịch làm việc' }} />
               <Stack.Screen name="DoctorMedicalRecordCreate" component={DoctorMedicalRecordCreate} options={{ title: 'Ghi bệnh án' }} />
               <Stack.Screen name="DoctorPrescriptionDetail" component={DoctorPrescriptionDetail} options={{ title: 'Chi tiết đơn thuốc' }} />
-
+              
+              <Stack.Screen name="PatientPrescriptions" component={PatientPrescriptions} options={{ headerShown: true, title: 'Đơn thuốc của tôi' }} />
+              <Stack.Screen name="PatientPrescriptionDetail" component={PatientPrescriptionDetail} options={{ headerShown: true, title: 'Chi tiết đơn thuốc' }} />
             </Stack.Navigator>
           </NavigationContainer>
         </MyDispatchContext.Provider>

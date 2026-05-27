@@ -1,0 +1,35 @@
+import { StyleSheet } from 'react-native';
+
+export default StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerCard: { backgroundColor: '#fff', borderRadius: 12, elevation: 2, marginBottom: 12 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  prescriptionTitle: { fontSize: 18, fontWeight: '700', color: '#1E88E5' },
+  subTitle: { fontSize: 12, color: '#888', marginTop: 2 },
+  dispensedBanner: { marginTop: 12, backgroundColor: '#E8F5E9', borderRadius: 8, padding: 10 },
+  dispensedText: { color: '#2E7D32', fontSize: 13, fontWeight: '600' },
+  section: { backgroundColor: '#fff', borderRadius: 12, elevation: 2, marginBottom: 12 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#333', marginBottom: 8 },
+  infoRow: { flexDirection: 'row', marginBottom: 6 },
+  infoLabel: { fontSize: 13, color: '#888', width: 130 },
+  infoValue: { fontSize: 13, color: '#333', flex: 1, fontWeight: '500' },
+  medicineHeader: { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 10, marginTop: 4 },
+  medicineCard: { marginBottom: 10, borderRadius: 10, elevation: 2, backgroundColor: '#fff' },
+  medHeader: { flexDirection: 'row', alignItems: 'flex-start' },
+  medBadge: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#1E88E5',
+    alignItems: 'center', justifyContent: 'center', marginTop: 2, marginRight: 10,
+  },
+  medBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  medName: { fontSize: 15, fontWeight: '700', color: '#222' },
+  medIngredient: { fontSize: 12, color: '#888', marginTop: 2 },
+  dosageGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dosageItem: {
+    width: '48%', backgroundColor: '#F5F7FA', borderRadius: 8,
+    padding: 8, marginBottom: 6, marginRight: '2%',
+  },
+  dosageLabel: { fontSize: 11, color: '#888', marginBottom: 2 },
+  dosageValue: { fontSize: 13, fontWeight: '600', color: '#333' },
+  itemNotes: { marginTop: 8, fontSize: 12, color: '#888', fontStyle: 'italic' },
+});

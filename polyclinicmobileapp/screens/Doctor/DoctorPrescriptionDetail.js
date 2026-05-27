@@ -99,7 +99,7 @@ const DoctorPrescriptionDetail = ({ route, navigation }) => {
         <Card key={idx} style={{ marginBottom: 8 }}>
           <Card.Content>
             <Text style={{ fontWeight: '600', fontSize: 15 }}>
-              {item.medicine_detail?.name || item.medicine_name || `Thuốc #${item.medicine}`}
+              {item.medicine?.name || item.medicine_detail?.name || `Thuốc #${item.medicine?.id ?? item.medicine}`}
             </Text>
             <Text>Số lượng: {item.quantity}</Text>
             {item.dosage    ? <Text>Liều: {item.dosage}</Text> : null}

@@ -28,7 +28,7 @@ const Home = ({ navigation }) => {
 
   const handleMenuPress = (key) => {
     if (key === 'appointment') navigation.navigate('SelectSpecialty');
-    if (key === 'prescription') navigation.navigate('DoctorPrescriptionCreate');
+    if (key === 'prescription') navigation.navigate('PatientPrescriptions');
     if (key === 'record') navigation.navigate('MyAppointment');
     if (key === 'consult') navigation.navigate('MyAppointment');
   };
