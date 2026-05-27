@@ -8,6 +8,7 @@ import { authApis, endpoints, appointmentStatusEndpoints } from '../../configs/A
 
 const DoctorAppointmentDetail = ({ route, navigation }) => {
   const { appointment } = route.params || {};
+
   const [item, setItem] = useState(appointment);
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -31,28 +32,29 @@ const DoctorAppointmentDetail = ({ route, navigation }) => {
       const res = await authApis(token).get(`${endpoints['medical-records']}?appointment_id=${item.id}`);
       const data = Array.isArray(res.data) ? res.data : res.data.results;
 
-      setRecord(data && data.length > 0 ? data[0] : null);
+      setRecord(data?.length > 0 ? data[0] : null);
     } catch (ex) {
       console.log('Lỗi load bệnh án:', ex.response?.data || ex.message);
     }
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => loadMedicalRecord());
+    const unsubscribe = navigation.addListener('focus', loadMedicalRecord);
     return unsubscribe;
   }, [navigation, item]);
 
   const updateStatus = async type => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('access_token');
 
+      const token = await AsyncStorage.getItem('access_token');
       if (!token) {
         navigation.navigate('Login');
         return;
       }
 
       let url = '';
+
       if (type === 'confirm') url = appointmentStatusEndpoints.confirm(item.id);
       if (type === 'start') url = appointmentStatusEndpoints.start(item.id);
 
@@ -66,6 +68,7 @@ const DoctorAppointmentDetail = ({ route, navigation }) => {
       }
 
       const res = await authApis(token).patch(url);
+
       setItem(res.data);
       Alert.alert('Thông báo', 'Cập nhật trạng thái thành công!');
     } catch (ex) {
@@ -116,22 +119,45 @@ const DoctorAppointmentDetail = ({ route, navigation }) => {
         </Card.Content>
       </Card>
 
-      {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
+      {loading && <ActivityIndicator style={styles.loadingIcon} />}
 
-      {item.status === 'pending' && <Button mode="contained" style={styles.button} onPress={() => updateStatus('confirm')}>Xác nhận lịch hẹn</Button>}
-      {item.status === 'confirmed' && <Button mode="contained" style={styles.button} onPress={() => updateStatus('start')}>Bắt đầu khám</Button>}
+      {item.status === 'pending' && (
+        <Button mode="contained" style={styles.button} textColor="white" onPress={() => updateStatus('confirm')}>
+          Xác nhận lịch hẹn
+        </Button>
+      )}
+
+      {item.status === 'confirmed' && (
+        <Button mode="contained" style={styles.button} textColor="white" onPress={() => updateStatus('start')}>
+          Bắt đầu khám
+        </Button>
+      )}
 
       {item.status === 'in_progress' && (
         <>
-          <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('DoctorMedicalRecordCreate', { appointment: item })}>Ghi bệnh án</Button>
-          <Button mode="outlined" style={styles.button} onPress={goToPrescription}>Kê đơn thuốc</Button>
-          <Button mode="contained" style={styles.button} onPress={() => updateStatus('complete')}>Hoàn thành khám</Button>
+          <Button mode="contained" style={styles.button} textColor="white" onPress={() => navigation.navigate('DoctorMedicalRecordCreate', { appointment: item })}>
+            Ghi bệnh án
+          </Button>
+
+          <Button mode="contained" style={styles.button} textColor="white" onPress={goToPrescription}>
+            Kê đơn thuốc
+          </Button>
+
+          <Button mode="contained" style={styles.button} textColor="white" onPress={() => updateStatus('complete')}>
+            Hoàn thành khám
+          </Button>
         </>
       )}
 
-      {item.status === 'completed' && <Button mode="outlined" style={styles.button} onPress={goToPrescription}>Xem / kê đơn thuốc</Button>}
+      {item.status === 'completed' && (
+        <Button mode="contained" style={styles.button} textColor="white" onPress={goToPrescription}>
+          Xem / kê đơn thuốc
+        </Button>
+      )}
 
-      <Button mode="outlined" style={styles.button} onPress={() => navigation.goBack()}>Quay lại</Button>
+      <Button mode="contained" style={styles.button} textColor="white" onPress={() => navigation.goBack()}>
+        Quay lại
+      </Button>
     </View>
   );
 };

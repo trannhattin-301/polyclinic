@@ -31,6 +31,7 @@ import DoctorPrescriptionDetail from './screens/Doctor/DoctorPrescriptionDetail'
 
 import PatientPrescriptions from './screens/Patient/PatientPrescriptions';
 import PatientPrescriptionDetail from './screens/Patient/PatientPrescriptionDetail';
+import PatientMedicalRecords from './screens/Patient/PatientMedicalRecords';
 
 import AdminReport from './screens/Admin/AdminReport';
 
@@ -57,7 +58,7 @@ export default function App() {
               <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Account" component={AccountScreen} options={{ headerShown: true, title: 'Tài khoản' }} />
-              
+
               <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: true, title: 'Thông tin tài khoản' }} />
               <Stack.Screen name="SelectSpecialty" component={SelectSpecialty} options={{ headerShown: true, title: 'Đặt lịch khám' }} />
               <Stack.Screen name="SelectDoctor" component={SelectDoctor} options={{ headerShown: true, title: 'Chọn bác sĩ' }} />
@@ -76,9 +77,10 @@ export default function App() {
               <Stack.Screen name="DoctorScheduleManagement" component={DoctorScheduleManagement} options={{ title: 'Lịch làm việc' }} />
               <Stack.Screen name="DoctorMedicalRecordCreate" component={DoctorMedicalRecordCreate} options={{ title: 'Ghi bệnh án' }} />
               <Stack.Screen name="DoctorPrescriptionDetail" component={DoctorPrescriptionDetail} options={{ title: 'Chi tiết đơn thuốc' }} />
-              
+
               <Stack.Screen name="PatientPrescriptions" component={PatientPrescriptions} options={{ headerShown: true, title: 'Đơn thuốc của tôi' }} />
               <Stack.Screen name="PatientPrescriptionDetail" component={PatientPrescriptionDetail} options={{ headerShown: true, title: 'Chi tiết đơn thuốc' }} />
+              <Stack.Screen name="PatientMedicalRecords" component={PatientMedicalRecords} options={{ headerShown: true, title: 'Hồ sơ bệnh án' }} />
 
               <Stack.Screen name="AdminReport" component={AdminReport} options={{ headerShown: true, title: 'Báo cáo thống kê' }} />
 

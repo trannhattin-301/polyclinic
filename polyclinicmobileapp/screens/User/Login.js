@@ -62,11 +62,11 @@ const Login = () => {
       console.log('Current user:', currentUser.data);
 
       if (currentUser.data.role === 'admin') {
-        navigation.navigate('AdminReport');
+        navigation.reset({ index:0, routes: [{ name: 'AdminReport' }] });
       } else if (['doctor', 'nurse'].includes(currentUser.data.role)) {
-        navigation.navigate('DoctorHome');
+        navigation.reset({ index:0, routes: [{ name: 'DoctorHome' }] });
       } else {
-        navigation.navigate('Home');
+        navigation.reset({ index:0, routes: [{ name: 'Home' }] });
       }
     } catch (ex) {
       console.log('Lỗi đăng nhập:', ex.response?.data || ex.message);

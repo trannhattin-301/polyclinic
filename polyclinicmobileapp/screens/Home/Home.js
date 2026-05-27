@@ -18,7 +18,6 @@ const menuItems = [
   { key: 'appointment', label: 'Đặt lịch khám', icon: 'calendar' },
   { key: 'prescription', label: 'Đơn thuốc', icon: 'medkit' },
   { key: 'record', label: 'Hồ sơ bệnh án', icon: 'book' },
-  { key: 'consult', label: 'Tư vấn online', icon: 'phone' },
 ];
 
 const Home = ({ navigation }) => {
@@ -29,8 +28,7 @@ const Home = ({ navigation }) => {
   const handleMenuPress = key => {
     if (key === 'appointment') navigation.navigate('SelectSpecialty');
     if (key === 'prescription') navigation.navigate('PatientPrescriptions');
-    if (key === 'record') navigation.navigate('MyAppointment');
-    if (key === 'consult') navigation.navigate('MyAppointment');
+    if (key === 'record') navigation.navigate('PatientMedicalRecords');
   };
 
   const handleTabPress = ({ route }) => {

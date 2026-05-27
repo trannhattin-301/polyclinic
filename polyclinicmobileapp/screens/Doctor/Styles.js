@@ -1,39 +1,42 @@
 import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
+  // All  screens
+
   container: {
     flex: 1,
     padding: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'white',
   },
 
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333',
+    color: 'black',
   },
 
   card: {
     marginBottom: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
 
   cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 6,
+    color: 'black',
   },
 
   cardText: {
     fontSize: 14,
     marginBottom: 4,
-    color: 'blue',
+    color: 'black',
   },
 
   input: {
     marginBottom: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
 
   chip: {
@@ -42,7 +45,8 @@ export default StyleSheet.create({
   },
 
   button: {
-    marginTop: 10,
+    marginTop: 12,
+    backgroundColor: 'purple',
   },
 
   rowBetween: {
@@ -54,6 +58,41 @@ export default StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
-    color: '#777',
+    color: 'black',
+  },
+
+  // DoctorHome.js
+
+  logoutButton: {
+    marginBottom: 20,
+  },
+
+  headerButtonText: {
+    color: 'black',
+  },
+
+  //  DoctorAppointments.js
+
+  buttonRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+
+  rowButtonLeft: {
+    flex: 1,
+    marginRight: 6,
+    backgroundColor: 'purple',
+  },
+
+  rowButtonRight: {
+    flex: 1,
+    marginLeft: 6,
+    backgroundColor: 'purple',
+  },
+
+  // DoctorMedicalRecordCreate.js / DoctorAppointmentDetail.js
+
+  loadingIcon: {
+    marginTop: 10,
   },
 });

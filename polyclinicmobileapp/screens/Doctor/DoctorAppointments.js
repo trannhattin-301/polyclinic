@@ -11,29 +11,6 @@ const DoctorAppointments = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [appointments, setAppointments] = useState([]);
 
-  const loadAppointments = async () => {
-    try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('access_token');
-
-      if (!token) {
-        navigation.navigate('Login');
-        return;
-      }
-
-      const res = await authApis(token).get(endpoints['appointments']);
-      setAppointments(res.data);
-    } catch (ex) {
-      console.log('Lỗi load lịch hẹn bác sĩ:', ex.response?.data || ex.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
   const formatTime = t => t ? String(t).slice(0, 5) : '--:--';
 
   const getStatus = s => {
@@ -52,9 +29,37 @@ const DoctorAppointments = ({ navigation }) => {
     }
 
     if (item.patient) return `Bệnh nhân #${item.patient}`;
-
     return '--';
   };
+
+  const loadAppointments = async () => {
+    try {
+      setLoading(true);
+
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        navigation.navigate('Login');
+        return;
+      }
+
+      const res = await authApis(token).get(endpoints['appointments']);
+      setAppointments(res.data);
+    } catch (ex) {
+      console.log('Lỗi load lịch hẹn bác sĩ:', ex.response?.data || ex.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshAppointments = async () => {
+    setRefreshing(true);
+    await loadAppointments();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
 
   const renderItem = ({ item }) => {
     const date = item.work_schedule?.date || '--';
@@ -73,16 +78,16 @@ const DoctorAppointments = ({ navigation }) => {
           <Text style={styles.cardText}>Ngày khám: {date}</Text>
           <Text style={styles.cardText}>Giờ khám: {start} - {end}</Text>
           <Text style={styles.cardText}>Mô tả: {item.disease_description || '--'}</Text>
-          <View style={{ flexDirection: 'row', marginTop: 8 }}>
-            <Button mode="contained" style={{ flex: 1, marginRight: 6 }} onPress={() => navigation.navigate('DoctorAppointmentDetail', { appointment: item })}>
+
+          <View style={styles.buttonRow}>
+            <Button mode="contained" style={styles.rowButtonLeft} textColor="white" onPress={() => navigation.navigate('DoctorAppointmentDetail', { appointment: item })}>
               Xem chi tiết
             </Button>
 
-            <Button mode="contained-tonal" style={{ flex: 1, marginLeft: 6 }} onPress={() => navigation.navigate('Chat', { appointment: item })}>
+            <Button mode="contained" style={styles.rowButtonRight} textColor="white" onPress={() => navigation.navigate('Chat', { appointment: item })}>
               Chat
             </Button>
           </View>
-
         </Card.Content>
       </Card>
     );
@@ -99,12 +104,7 @@ const DoctorAppointments = ({ navigation }) => {
           data={appointments}
           keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => {
-              setRefreshing(true);
-              loadAppointments().finally(() => setRefreshing(false));
-            }} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAppointments} />}
           ListEmptyComponent={<Text style={styles.emptyText}>Chưa có lịch hẹn nào</Text>}
         />
       )}
