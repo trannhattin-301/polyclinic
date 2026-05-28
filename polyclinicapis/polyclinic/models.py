@@ -46,6 +46,9 @@ class ServicesSpecialty(BaseModel):
     price = models.DecimalField(decimal_places=2, max_digits=10, default=0)
     specialties=models.ManyToManyField(Specialty,blank=True)
 
+    def __str__(self):
+        return self.name
+
 class StaffProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE,related_name="staff_profile")
     specialties = models.ManyToManyField(Specialty,blank=True,through="staffSpecialty")
@@ -223,18 +226,6 @@ class Prescription(BaseModel):
 
 
 class PrescriptionItem(BaseModel):
-    # class Frequency(models.TextChoices):
-    #     ONCE_DAILY   = "1x_day",  "1 lần/ngày"
-    #     TWICE_DAILY  = "2x_day",  "2 lần/ngày"
-    #     THREE_DAILY  = "3x_day",  "3 lần/ngày"
-    #     FOUR_DAILY   = "4x_day",  "4 lần/ngày"
-    #     AS_NEEDED    = "as_needed", "Khi cần"
-    #
-    # class Timing(models.TextChoices):
-    #     BEFORE_MEAL = "before_meal", "Trước ăn"
-    #     AFTER_MEAL  = "after_meal",  "Sau ăn"
-    #     WITH_MEAL   = "with_meal",   "Trong khi ăn"
-    #     BEDTIME     = "bedtime",     "Trước khi ngủ"
 
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name="items")
     medicine     = models.ForeignKey(Medicine, on_delete=models.PROTECT, related_name="prescription_items")

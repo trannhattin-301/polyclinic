@@ -4,7 +4,8 @@ from datetime import date, time, timedelta
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'polyclinicapis.settings')
 django.setup()
 
-from polyclinic.models import User, Specialty, StaffProfile, StaffSpecialty, ServicesSpecialty, WorkSchedule, TimeSlot, MedicineCategory, Medicine
+from polyclinic.models import User, Specialty, StaffProfile, StaffSpecialty, ServicesSpecialty, WorkSchedule, TimeSlot, \
+    MedicineCategory, Medicine
 
 # seed data cho bảng Chuyên khoa
 specialties = [
@@ -28,8 +29,10 @@ staffs = [
 ]
 
 for username, email, first_name, last_name, phone, degree, experience, fee in staffs:
-    user, created = User.objects.get_or_create(username=username, defaults={"email": email, "first_name": first_name, "last_name": last_name, "phone": phone, "role": User.Role.DOCTOR})
-    user.set_password("123456")     # dù user mới tạo hay đã tồn tại, đều set password lại.
+    user, created = User.objects.get_or_create(username=username, defaults={"email": email, "first_name": first_name,
+                                                                            "last_name": last_name, "phone": phone,
+                                                                            "role": User.Role.DOCTOR})
+    user.set_password("123456")  # dù user mới tạo hay đã tồn tại, đều set password lại.
     user.save()
     StaffProfile.objects.get_or_create(user=user, defaults={"degree": degree, "experience": experience, "fee": fee})
 
@@ -56,15 +59,136 @@ for username, specialty_name in mapping:
 
 # seed data cho bảng Dịch vụ
 data = [
-    {"name": "Kham tong quat", "description": "Dich vu kham suc khoe tong quat", "price": 150000, "specialties": ["Noi tong quat"]},
-    {"name": "Kham nhi", "description": "Kham va tu van suc khoe cho tre em", "price": 180000, "specialties": ["Nhi khoa"]},
-    {"name": "Kham da lieu", "description": "Kham va dieu tri cac benh ngoai da", "price": 200000, "specialties": ["Da lieu"]},
-    {"name": "Kham tai mui hong", "description": "Kham cac benh tai, mui, hong", "price": 170000, "specialties": ["Tai mui hong"]},
-    {"name": "Kham rang ham mat", "description": "Kham va tu van rang ham mat", "price": 160000, "specialties": ["Rang ham mat"]},
+    {
+        "name": "Kham tong quat",
+        "description": "Dich vu kham suc khoe tong quat",
+        "price": 150000,
+        "specialties": ["Noi tong quat"]
+    },
+    {
+        "name": "Kham nhi",
+        "description": "Kham va tu van suc khoe cho tre em",
+        "price": 180000,
+        "specialties": ["Nhi khoa"]
+    },
+    {
+        "name": "Kham da lieu",
+        "description": "Kham va dieu tri cac benh ngoai da",
+        "price": 200000,
+        "specialties": ["Da lieu"]
+    },
+    {
+        "name": "Kham tai mui hong",
+        "description": "Kham cac benh tai, mui, hong",
+        "price": 170000,
+        "specialties": ["Tai mui hong"]
+    },
+    {
+        "name": "Kham rang ham mat",
+        "description": "Kham va tu van rang ham mat",
+        "price": 160000,
+        "specialties": ["Rang ham mat"]
+    },
+    {
+        "name": "Kham tong quat nang cao",
+        "description": "Kham suc khoe tong quat va tu van dieu tri",
+        "price": 200000,
+        "specialties": ["Noi tong quat"]
+    },
+    {
+        "name": "Kham huyet ap",
+        "description": "Kiem tra huyet ap va cac van de lien quan",
+        "price": 140000,
+        "specialties": ["Noi tong quat"]
+    },
+    {
+        "name": "Kham suc khoe dinh ky",
+        "description": "Kham suc khoe tong quat dinh ky cho moi doi tuong",
+        "price": 250000,
+        "specialties": ["Noi tong quat"]
+    },
+
+    {
+        "name": "Kham nhi tong quat",
+        "description": "Kham suc khoe tong quat cho tre em",
+        "price": 190000,
+        "specialties": ["Nhi khoa"]
+    },
+    {
+        "name": "Tu van dinh duong tre em",
+        "description": "Tu van che do an va cham soc cho tre",
+        "price": 160000,
+        "specialties": ["Nhi khoa"]
+    },
+    {
+        "name": "Kham tre sot cao",
+        "description": "Chan doan va dieu tri cac benh sot o tre em",
+        "price": 210000,
+        "specialties": ["Nhi khoa"]
+    },
+
+    {
+        "name": "Dieu tri mun",
+        "description": "Kham va dieu tri cac van de ve mun",
+        "price": 220000,
+        "specialties": ["Da lieu"]
+    },
+    {
+        "name": "Kham di ung da",
+        "description": "Kiem tra va dieu tri di ung ngoai da",
+        "price": 230000,
+        "specialties": ["Da lieu"]
+    },
+    {
+        "name": "Cham soc da",
+        "description": "Tu van va cham soc da chuyen sau",
+        "price": 180000,
+        "specialties": ["Da lieu"]
+    },
+
+    {
+        "name": "Kham viem xoang",
+        "description": "Chan doan va dieu tri viem xoang",
+        "price": 180000,
+        "specialties": ["Tai mui hong"]
+    },
+    {
+        "name": "Kham viem hong",
+        "description": "Kham va dieu tri cac benh ve hong",
+        "price": 160000,
+        "specialties": ["Tai mui hong"]
+    },
+    {
+        "name": "Noi soi tai mui hong",
+        "description": "Noi soi kiem tra tai mui hong",
+        "price": 260000,
+        "specialties": ["Tai mui hong"]
+    },
+
+    {
+        "name": "Lay cao rang",
+        "description": "Ve sinh va lay cao rang dinh ky",
+        "price": 120000,
+        "specialties": ["Rang ham mat"]
+    },
+    {
+        "name": "Kham sau rang",
+        "description": "Kiem tra va dieu tri sau rang",
+        "price": 170000,
+        "specialties": ["Rang ham mat"]
+    },
+    {
+        "name": "Tu van nieng rang",
+        "description": "Tu van va danh gia tinh trang rang mieng",
+        "price": 200000,
+        "specialties": ["Rang ham mat"]
+    }
 ]
 
 for item in data:
-    service, created = ServicesSpecialty.objects.get_or_create(name=item["name"], defaults={"description": item["description"], "price": item["price"], "active": True})
+    service, created = ServicesSpecialty.objects.get_or_create(name=item["name"],
+                                                               defaults={"description": item["description"],
+                                                                         "price": item["price"], "active": True})
     service.specialties.set(Specialty.objects.filter(name__in=item["specialties"]))
 
 # seed data cho bang Danh muc thuoc
@@ -195,11 +319,6 @@ for item in medicines:
     else:
         print(f"Khong tim thay danh muc thuoc: {item['category']}")
 
-# Seed data cho schedule
-# Tao lich tu 27/05/2026 den 05/06/2026
-# Khong xoa lich cu, khong xoa appointment cu
-# Neu ngay da co WorkSchedule nhung thieu TimeSlot thi tu bo sung
-
 start_date = date(2026, 5, 27)
 end_date = date(2026, 6, 5)
 
@@ -223,18 +342,14 @@ total_days = (end_date - start_date).days + 1
 for staff in StaffProfile.objects.filter(active=True):
     for i in range(total_days):
         current_date = start_date + timedelta(days=i)
-
         work_schedule, created = WorkSchedule.objects.get_or_create(
             staff_profile=staff,
             date=current_date,
             defaults={"active": True}
         )
-
-        # Neu lich da ton tai nhung dang bi tat thi bat lai
         if not work_schedule.active:
             work_schedule.active = True
             work_schedule.save()
-
         for start, end in TIME_SLOTS:
             slot, created = TimeSlot.objects.get_or_create(
                 work_schedule=work_schedule,
@@ -245,13 +360,8 @@ for staff in StaffProfile.objects.filter(active=True):
                     "active": True
                 }
             )
-
-            # Neu khung gio da ton tai nhung dang bi tat thi bat lai
             if not slot.active:
                 slot.active = True
                 slot.save()
 
-
 print("Da chen du lieu mau thanh cong!")
-# client_id:R4fOkaPaP8WNCZSulz9BFbN5leKfToNcwEftXRKl
-# client_secret:M7g8KfMU9XuDBEeg2ZCgfTdaiU8Ov3RXO5RCHkh85zJrmFiZwqh9c6LZUJ0y32cj5md64zoAEIQh6PRn0QYBxjZshi7bvEljw8RvTTtljlQpolfE2K2w0n4N0NnQzRtT
